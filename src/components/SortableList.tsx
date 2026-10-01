@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Icon } from './icons';
 import { dropIndex } from './sortable';
 
 interface Drag {
@@ -141,7 +142,7 @@ export function SortableList<T>({
               }
             }}
           >
-            ⠿
+            <Icon name="grip" size={22} />
           </button>
         );
         return (

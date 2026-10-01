@@ -11,6 +11,7 @@ import { useNav } from '../Nav';
 import { Banner, Screen, Section, useConfirm } from '../components/ui';
 import { SongPicker } from '../components/SongPicker';
 import { fileToAvatar } from '../components/image';
+import { Icon } from '../components/icons';
 
 export function PlayerEditor({ playerId }: { playerId?: string }) {
   const team = useActiveTeam();
@@ -98,7 +99,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
       <Section>
         <div className="avatar-row">
           <button className="avatar" onClick={() => photoInput.current?.click()} aria-label="Choose photo">
-            {photo ? <img src={photo} alt="" /> : <span>{name.trim() ? name.trim()[0].toUpperCase() : '📷'}</span>}
+            {photo ? <img src={photo} alt="" /> : <span>{name.trim() ? name.trim()[0].toUpperCase() : '+'}</span>}
           </button>
           <input
             ref={photoInput}
@@ -127,7 +128,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
       <Section title="Walk-up song">
         <button className="row pick" onClick={() => setPicking(true)}>
           <span className="grow">
-            <span className="row-title">🎵 {song ? song.name : 'Choose a song'}</span>
+            <span className="row-title"><Icon name="music" size={18} /> {song ? song.name : 'Choose a song'}</span>
             <span className="row-sub">
               {song ? (song.sourceType === 'spotify' ? 'Spotify reference' : audioIds.has(song.localReference ?? song.id) ? 'On this device' : 'Audio missing on this device') : 'From your music library'}
             </span>
@@ -143,7 +144,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         {spotify && (
           <p>
             <a className="btn btn-spotify" href={spotify} target="_blank" rel="noopener noreferrer">
-              ↗ Open in Spotify
+              <Icon name="external" size={18} /> Open in Spotify
             </a>
           </p>
         )}
@@ -152,7 +153,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
       <Section title="Announcer (optional)" hint="A recording of the name being spoken. It plays over the walk-up music and the music dips while it talks.">
         <button className="row pick" onClick={() => setPickingAnnouncer(true)}>
           <span className="grow">
-            <span className="row-title">🎙 {announcer ? announcer.name : 'Add announcer recording'}</span>
+            <span className="row-title"><Icon name="mic" size={18} /> {announcer ? announcer.name : 'Add announcer recording'}</span>
             <span className="row-sub">
               {announcer ? (audioIds.has(announcer.localReference ?? announcer.id) ? `On this device${announcer.duration ? ` · ${announcer.duration.toFixed(1)}s` : ''}` : 'Audio missing on this device') : 'e.g. “Now batting… number 7… Brevan Sun!”'}
             </span>
@@ -185,7 +186,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
           </div>
           {timeError ? <p className="error-text">{timeError}</p> : clip && <p className="hint">Plays {formatTime(clip.start)}–{formatTime(clip.end)} ({Math.round(clip.duration)} seconds).</p>}
           <button className={`btn wide ${testing ? 'btn-stop' : 'btn-primary'}`} onClick={() => (testing ? playback.stopAll() : test())} disabled={!!timeError}>
-            {testing ? '⏹ Stop test' : '▶ Test this clip'}
+            <Icon name={testing ? 'stop' : 'play'} size={18} /> {testing ? 'Stop test' : 'Test this clip'}
           </button>
           {audio.status === 'error' && audio.error === 'missing' && <p className="error-text">Walk-up song not available on this device.</p>}
         </Section>

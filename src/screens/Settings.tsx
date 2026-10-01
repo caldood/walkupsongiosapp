@@ -7,6 +7,7 @@ import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Banner, Screen, Section, Segmented, Toggle, useConfirm } from '../components/ui';
 import { TeamSettingsForm } from '../components/TeamSettingsForm';
+import { Icon } from '../components/icons';
 
 export function Settings() {
   const { settings, storageError } = useAppState();
@@ -20,11 +21,11 @@ export function Settings() {
     <Screen title="Settings">
       {storageError && <Banner kind="error">{storageError}</Banner>}
 
-      <Section title={team ? `Playback · ${team.name}` : 'Playback'}>
+      <Section grouped title={team ? `Playback · ${team.name}` : 'Playback'}>
         {team ? <TeamSettingsForm /> : <p className="muted">Create a team to change playback settings.</p>}
       </Section>
 
-      <Section title="Device">
+      <Section grouped title="Device">
         <div className="row stacked">
           <span className="row-title">Theme</span>
           <Segmented label="Theme" value={settings.theme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light (sunny)' }]} onChange={(theme) => store.updateSettings({ theme })} />
@@ -39,7 +40,7 @@ export function Settings() {
             setTone(false);
           }}
         >
-          {tone ? '🔊 Playing…' : '🔊 Test speaker'}
+          <Icon name="speaker" size={20} /> {tone ? 'Playing…' : 'Test speaker'}
         </button>
       </Section>
 

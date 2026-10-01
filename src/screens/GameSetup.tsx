@@ -9,6 +9,7 @@ import { Screen, Section } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
 import { SongPicker } from '../components/SongPicker';
 import { SortableList } from '../components/SortableList';
+import { Icon } from '../components/icons';
 
 const STEPS = ['Team', 'Batting order', 'Songs', 'Go!'];
 
@@ -55,7 +56,7 @@ export function GameSetup() {
                     <span className="row-title">{t.name}</span>
                     <span className="row-sub">{t.players.length} players</span>
                   </span>
-                  {t.id === settings.activeTeamId && <span>✓</span>}
+                  {t.id === settings.activeTeamId && <Icon name="check" size={20} />}
                 </button>
               </li>
             ))}
@@ -76,7 +77,7 @@ export function GameSetup() {
                 {handle}
                 <span className="pos">{i + 1}</span>
                 <span className="grow row-title"><span className="num">#{p.number || '–'}</span> {p.name}</span>
-                <button className="btn-icon sm" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}>✕</button>
+                <button className="btn-icon sm" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}><Icon name="x" size={18} /></button>
               </>
             )}
           />
@@ -91,7 +92,7 @@ export function GameSetup() {
       )}
 
       {step === 2 && team && (
-        <Section hint="Tap ▶ to hear each walk-up. Tap a row to change the song.">
+        <Section hint="Tap Test to hear each walk-up. Tap a row to change the song.">
           <MissingAudio />
           <ul className="list">
             {order.map((p) => {
@@ -101,7 +102,7 @@ export function GameSetup() {
                 <li key={p.id} className="row player-row">
                   <button className="grow plain" onClick={() => setPickFor(p.id)}>
                     <span className="row-title"><span className="num">#{p.number || '–'}</span> {p.name}</span>
-                    <span className={`row-sub ${ok ? '' : 'warn-text'}`}>{song ? `${ok ? '🎵' : '⚠'} ${song.name}${ok ? '' : ' – audio missing'}` : '⚠ No song yet'}</span>
+                    <span className={`row-sub ${ok ? '' : 'warn-text'}`}>{song ? `${song.name}${ok ? '' : ' – audio missing'}` : 'No song yet'}</span>
                   </button>
                   {song?.sourceType === 'local' && ok && (
                     <button
@@ -111,7 +112,7 @@ export function GameSetup() {
                         if (typeof req !== 'string') playback.playWalkUp(req);
                       }}
                     >
-                      ▶ Test
+                      <Icon name="play" size={16} /> Test
                     </button>
                   )}
                 </li>
@@ -137,7 +138,11 @@ export function GameSetup() {
           <div className="summary">
             <p><strong>{team.name}</strong></p>
             <p>{order.length} batter{order.length === 1 ? "" : "s"} · default walk-up {team.settings.defaultClipSeconds}s</p>
-            {missing.length > 0 ? <p className="warn-text">⚠ {missing.length} song(s) missing on this device.</p> : <p>✓ All songs ready.</p>}
+            {missing.length > 0 ? (
+              <p className="warn-text"><Icon name="warn" size={18} /> {missing.length} song(s) missing on this device.</p>
+            ) : (
+              <p><Icon name="check" size={18} /> All songs ready.</p>
+            )}
           </div>
           <p className="hint">Connect your Bluetooth speaker now, then check the sound with Settings › Test speaker.</p>
           <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); nav.go({ name: 'game' }); }}>

@@ -1,13 +1,15 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useNav } from '../Nav';
+import { DiamondArt, Icon } from './icons';
 
 export function Screen({ title, children, right, onBack }: { title: string; children: ReactNode; right?: ReactNode; onBack?: () => void }) {
   const nav = useNav();
   return (
     <div className="screen">
       <header className="topbar">
-        <button className="btn-text" onClick={onBack ?? nav.back} aria-label="Back">
-          ‹ Back
+        <button className="btn-text back" onClick={onBack ?? nav.back} aria-label="Back">
+          <Icon name="chev-l" size={22} />
+          <span>Back</span>
         </button>
         <h1>{title}</h1>
         <div className="topbar-right">{right}</div>
@@ -17,11 +19,11 @@ export function Screen({ title, children, right, onBack }: { title: string; chil
   );
 }
 
-export function Section({ title, children, hint }: { title?: string; children: ReactNode; hint?: string }) {
+export function Section({ title, children, hint, grouped }: { title?: string; children: ReactNode; hint?: string; grouped?: boolean }) {
   return (
     <section className="section">
       {title && <h2 className="section-title">{title}</h2>}
-      {children}
+      {grouped ? <div className="group">{children}</div> : children}
       {hint && <p className="hint">{hint}</p>}
     </section>
   );
@@ -143,9 +145,21 @@ export function HoldButton({ label, holdMs = 700, onHold, className = '' }: { la
 export function EmptyState({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
   return (
     <div className="empty">
+      <div className="empty-art">
+        <DiamondArt />
+      </div>
       <h2>{title}</h2>
       {children && <p>{children}</p>}
       {action}
     </div>
+  );
+}
+
+/** Round player picture: the photo if there is one, otherwise their initial. */
+export function Avatar({ name, photo, size = 40, tone = 'default' }: { name: string; photo?: string; size?: number; tone?: 'default' | 'accent' }) {
+  return (
+    <span className={`avatar-sm ${tone}`} style={{ width: size, height: size, fontSize: size * 0.42 }} aria-hidden="true">
+      {photo ? <img src={photo} alt="" /> : (name.trim()[0] ?? '?').toUpperCase()}
+    </span>
   );
 }

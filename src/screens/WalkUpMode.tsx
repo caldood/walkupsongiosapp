@@ -10,7 +10,8 @@ import { playback, store } from '../state/app';
 import { nextBatter, playCurrentWalkUp, playPlayer, preloadBatters, previousBatter } from '../state/gameActions';
 import { useActiveTeam, useAppState, usePlayback } from '../state/hooks';
 import { useNav } from '../Nav';
-import { Banner, EmptyState } from '../components/ui';
+import { Icon } from '../components/icons';
+import { Avatar, Banner, EmptyState } from '../components/ui';
 
 export function WalkUpMode({ locked }: { locked: boolean }) {
   const { game, audioIds } = useAppState();
@@ -80,33 +81,43 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
     <div className="walkup">
       <section className="batter-card" aria-live="polite">
         <div className="kicker">
-          ⚾ NOW BATTING <span className="muted">· {batters.findIndex((b) => b.id === batter.id) + 1} of {batters.length}</span>
+          <Icon name="ball" size={16} /> NOW BATTING
+          <span className="kicker-count">
+            {batters.findIndex((b) => b.id === batter.id) + 1} / {batters.length}
+          </span>
         </div>
         <div className="batter-main">
-          {batter.photo ? <img className="batter-photo" src={batter.photo} alt="" /> : null}
-          <div className="batter-number">#{batter.number || '–'}</div>
-          <div className="batter-name">{batter.name}</div>
-        </div>
-        <div className="batter-song">
-          {song ? (
-            <>
-              <span aria-hidden="true">🎵</span> {song.name}
-            </>
-          ) : (
-            <span className="muted">No walk-up song assigned</span>
-          )}
-        </div>
-        {clip && song?.sourceType === 'local' && (
-          <div className="batter-clip">
-            {describeClip(clip, formatTime)} · {Math.round(clip.duration)}s
+          <div className="plate" aria-label={`Number ${batter.number || 'none'}`}>
+            <small>#</small>
+            {batter.number || '–'}
           </div>
-        )}
-        {announcer && (
-          <div className="batter-clip">
-            <span aria-hidden="true">🎙</span> {announcer.name}
-            {!announcerReady && <span className="warn-text"> · not on this device (music only)</span>}
+          <div className="batter-id">
+            <div className="batter-name">{batter.name}</div>
+            <div className="batter-song">
+              {song ? (
+                <>
+                  <Icon name="music" size={18} /> <span>{song.name}</span>
+                </>
+              ) : (
+                <span className="muted">No walk-up song assigned</span>
+              )}
+            </div>
+            <div className="chips-row">
+              {clip && song?.sourceType === 'local' && (
+                <span className="pill">
+                  {describeClip(clip, formatTime)} · {Math.round(clip.duration)}s
+                </span>
+              )}
+              {announcer && (
+                <span className={`pill ${announcerReady ? '' : 'warn'}`}>
+                  <Icon name="mic" size={14} /> {announcer.name}
+                  {!announcerReady && ' · missing'}
+                </span>
+              )}
+            </div>
           </div>
-        )}
+          {batter.photo && <img className="batter-photo" src={batter.photo} alt="" />}
+        </div>
         {song && song.sourceType === 'local' && !playable && (
           <Banner kind="warn" action={<button className="btn btn-small" onClick={() => fileInput.current?.click()}>Choose Audio File</button>}>
             Walk-up song not available on this device.
@@ -137,35 +148,49 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
         {spotify ? (
           <>
             <a className="btn-giant btn-spotify" href={spotify} target="_blank" rel="noopener noreferrer">
-              ↗ OPEN IN SPOTIFY
+              <Icon name="external" size={24} /> OPEN IN SPOTIFY
             </a>
             <p className="hint center">Spotify needs internet and plays in the Spotify app. Come back here afterwards.</p>
           </>
         ) : (
           <button className="btn-giant btn-play" onClick={play} disabled={status === 'playing' || status === 'loading'}>
-            {status === 'playing' || status === 'loading' ? '♪ PLAYING…' : status === 'paused' ? '▶ RESUME' : '▶ PLAY WALK-UP'}
+            {status === 'playing' || status === 'loading' ? (
+              <>
+                <Icon name="eq" size={26} /> PLAYING
+              </>
+            ) : status === 'paused' ? (
+              <>
+                <Icon name="play" size={26} /> RESUME
+              </>
+            ) : (
+              <>
+                <Icon name="play" size={26} /> PLAY WALK-UP
+              </>
+            )}
           </button>
         )}
 
         <div className="pair">
           <button className="btn-big btn-neutral" onClick={() => playback.pause()} disabled={!(mine && status === 'playing')}>
-            ⏸ PAUSE
+            <Icon name="pause" size={22} /> PAUSE
           </button>
           <button className="btn-big btn-stop" onClick={() => playback.stopAll()} disabled={audio.status === 'idle'}>
-            ⏹ STOP
+            <Icon name="stop" size={22} /> STOP
           </button>
         </div>
 
-        <button className="btn-giant btn-next" onClick={nextBatter} disabled={locked}>
-          NEXT BATTER →
-        </button>
-        <button className="btn-text prev" onClick={previousBatter} disabled={locked}>
-          ‹ Previous batter
-        </button>
+        <div className="pair nav-pair">
+          <button className="btn-big btn-ghost" onClick={previousBatter} disabled={locked} aria-label="Previous batter">
+            <Icon name="back" size={22} />
+          </button>
+          <button className="btn-giant btn-next" onClick={nextBatter} disabled={locked}>
+            NEXT BATTER <Icon name="next" size={26} />
+          </button>
+        </div>
       </section>
 
       <section className="upnext">
-        <h2>BATTING ORDER · TAP A NAME TO PLAY</h2>
+        <h2>Batting order <span>tap a name to play</span></h2>
         <ol>
           {batters.map((p, i) => {
             const isCurrent = p.id === batter.id;
@@ -175,10 +200,16 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
               <li key={p.id}>
                 <button className={`${isCurrent ? 'current' : ''} ${sounding ? 'sounding' : ''}`} disabled={locked} onClick={() => tap(p)} aria-label={`${sounding ? 'Stop' : 'Play'} ${p.name}'s walk-up song`}>
                   <span className="pos">{i + 1}</span>
-                  <span className="num">#{p.number || '–'}</span>
-                  <span className="nm">{p.name}</span>
-                  <span className="sg">{sng ? sng.name : 'no song'}</span>
-                  <span className="go" aria-hidden="true">{sounding ? '■' : '▶'}</span>
+                  <Avatar name={p.name} photo={p.photo} size={42} tone={sounding || isCurrent ? 'accent' : 'default'} />
+                  <span className="who">
+                    <span className="nm">
+                      <span className="num">#{p.number || '–'}</span> {p.name}
+                    </span>
+                    <span className="sg">{sng ? sng.name : 'no song'}</span>
+                  </span>
+                  <span className="go" aria-hidden="true">
+                    <Icon name={sounding ? 'eq' : 'play'} size={sounding ? 22 : 20} />
+                  </span>
                 </button>
               </li>
             );

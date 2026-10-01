@@ -4,6 +4,7 @@ import { store } from '../state/app';
 import { useActiveTeam, useAppState, usePlayback } from '../state/hooks';
 import { useNav } from '../Nav';
 import { AudioOutput } from '../components/AudioOutput';
+import { Icon } from '../components/icons';
 import { HoldButton } from '../components/ui';
 import { WalkUpMode } from './WalkUpMode';
 
@@ -25,26 +26,27 @@ export function GameShell() {
   return (
     <div className={`screen game ${locked ? 'is-locked' : ''}`}>
       <header className="scoreboard">
-        <button className="btn-text" onClick={() => nav.back()} disabled={locked} aria-label="Home">
-          ‹ HOME
+        <button className="btn-text back" onClick={() => nav.back()} disabled={locked} aria-label="Home">
+          <Icon name="chev-l" size={22} />
+          <span>HOME</span>
         </button>
         <div className="team-name">{team?.name ?? 'No team'}</div>
         <button className={`btn-icon ${locked ? 'on' : ''}`} onClick={() => !locked && setLocked(true)} aria-label={locked ? 'Controls locked' : 'Lock controls'} aria-pressed={locked}>
-          {locked ? '🔒' : '🔓'}
+          <Icon name={locked ? 'lock' : 'unlock'} size={22} />
         </button>
         <div className="inning">
           <button className="btn-icon sm" disabled={locked} onClick={() => store.prevHalfInning()} aria-label="Previous half inning">
-            ‹
+            <Icon name="chev-l" size={18} />
           </button>
           <span className="inning-label" aria-live="polite">
-            {game.half === 'top' ? '▲ TOP' : '▼ BOT'} <b>{game.inning}</b>
+            <span className="half">{game.half === 'top' ? '▲ TOP' : '▼ BOT'}</span> <b>{game.inning}</b>
           </span>
           <button className="btn-icon sm" disabled={locked} onClick={() => store.nextHalfInning()} aria-label="Next half inning">
-            ›
+            <Icon name="chev-r" size={18} />
           </button>
         </div>
         <div className="status-cell">
-          {playing && <span className="onair">● ON AIR</span>}
+          {playing && <span className="onair"><i /> ON AIR</span>}
           <AudioOutput compact />
         </div>
       </header>

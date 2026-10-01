@@ -4,6 +4,7 @@ import { formatTime } from '../core/format';
 import type { Song } from '../core/types';
 import { store } from '../state/app';
 import { useAppState } from '../state/hooks';
+import { Icon } from './icons';
 
 /** Bottom-sheet song chooser: pick from the library, or add new audio files on the spot. */
 export function SongPicker({
@@ -74,7 +75,7 @@ export function SongPicker({
                       {s.sourceType === 'spotify' ? 'Spotify link (opens Spotify)' : playable ? `On this device${s.duration ? ` · ${formatTime(s.duration)}` : ''}` : 'Audio missing – re-select the file'}
                     </span>
                   </span>
-                  {selectedIds.includes(s.id) && <span aria-label="selected">✓</span>}
+                  {selectedIds.includes(s.id) && <Icon name="check" size={20} />}
                 </button>
               </li>
             );

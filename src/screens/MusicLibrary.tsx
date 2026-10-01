@@ -7,6 +7,7 @@ import { playback, store } from '../state/app';
 import { useAppState, usePlayback } from '../state/hooks';
 import { Banner, Screen, Section, useConfirm } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
+import { Icon } from '../components/icons';
 
 export function MusicLibrary() {
   const { songs, audioIds, teams } = useAppState();
@@ -45,11 +46,11 @@ export function MusicLibrary() {
       <Section hint="Audio is copied into this app's private storage on your iPhone, so it plays with no signal. MP3, M4A/AAC and WAV work in Safari.">
         <input ref={input} type="file" accept={ACCEPTED_AUDIO} multiple hidden onChange={(e) => void addFiles(e.target.files)} />
         <button className="btn btn-primary wide big" disabled={busy} onClick={() => input.current?.click()}>
-          {busy ? 'Adding…' : '＋ ADD MUSIC'}
+          {busy ? 'Adding…' : <><Icon name="plus" size={22} /> ADD MUSIC</>}
         </button>
         <input ref={announcerInput} type="file" accept={ACCEPTED_AUDIO} multiple hidden onChange={(e) => void addFiles(e.target.files, 'announcer')} />
         <button className="btn wide" disabled={busy} onClick={() => announcerInput.current?.click()}>
-          🎙 Add announcer recordings
+          <Icon name="mic" size={20} /> Add announcer recordings
         </button>
         {message && <Banner>{message}</Banner>}
       </Section>
@@ -68,19 +69,19 @@ export function MusicLibrary() {
               <li key={s.id} className="card">
                 <div className="row">
                   <button className="grow plain" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id}>
-                    <span className="row-title">{s.role === 'announcer' ? '🎙 ' : ''}{s.name}</span>
+                    <span className="row-title">{s.role === 'announcer' && <Icon name="mic" size={16} />} {s.name}</span>
                     <span className="row-sub">
-                      {local ? (has ? `On this device${s.duration ? ` · ${formatTime(s.duration)}` : ''}` : '⚠ Audio missing – choose the file again') : 'Spotify reference (not playable here)'}
+                      {local ? (has ? `On this device${s.duration ? ` · ${formatTime(s.duration)}` : ''}` : 'Audio missing – choose the file again') : 'Spotify reference (not playable here)'}
                     </span>
                   </button>
                   {has && (
                     <button className={`btn btn-small ${playingThis ? 'btn-stop' : ''}`} onClick={() => (playingThis ? playback.stopAll() : playback.previewSong(s))}>
-                      {playingThis ? '⏹' : '▶'}
+                      <Icon name={playingThis ? 'stop' : 'play'} size={18} />
                     </button>
                   )}
                   {!local && url && (
                     <a className="btn btn-small btn-spotify" href={url} target="_blank" rel="noopener noreferrer">
-                      ↗
+                      <Icon name="external" size={18} />
                     </a>
                   )}
                 </div>
