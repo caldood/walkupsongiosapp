@@ -79,23 +79,29 @@ export class HtmlAudioBackend implements MediaBackend {
   }
 
   /**
-   * iOS only lets an <audio> element play programmatically after it has been started by a user
-   * gesture. Call this from the first tap anywhere so later auto-advance / auto-play works.
+   * Some browsers (iOS Safari) only let an <audio> element play programmatically after it has been
+   * started by a user gesture. Call this from the first tap anywhere so later auto-advance / auto-play
+   * works. It must never disturb real playback: if a real track is loaded (or loads while the silent
+   * clip is starting), the real track wins and the silent clip is abandoned untouched.
    */
   unlock() {
     if (this.unlocked || this.el.getAttribute('src')) return;
     this.unlocked = true;
     this.expectPause(1500);
     this.el.src = SILENT_WAV;
+    const stillSilent = () => this.el.getAttribute('src') === SILENT_WAV;
     this.el
       .play()
       .then(() => {
+        if (!stillSilent()) return; // a real track took over the element
         this.el.pause();
         this.el.removeAttribute('src');
         this.el.load();
       })
       .catch(() => {
+        // Interrupted by a real load() (AbortError) or blocked: allow another attempt later.
         this.unlocked = false;
+        if (stillSilent()) this.el.removeAttribute('src');
       });
   }
 }

@@ -13,7 +13,7 @@ export class AudioLibrary {
     private repo: Repository,
     private createUrl: (b: Blob) => string = (b) => URL.createObjectURL(b),
     private revokeUrl: (u: string) => void = (u) => URL.revokeObjectURL(u),
-    max = 8,
+    max = 24,
   ) {
     this.max = max;
   }

@@ -7,6 +7,7 @@ import { precachePlugin } from './scripts/precache-plugin.ts';
 export default defineConfig({
   base: './',
   plugins: [react(), precachePlugin()],
-  build: { target: 'es2022', sourcemap: false },
+  // Safari 14+ (iOS and macOS) – the main target.
+  build: { target: ['es2020', 'safari14'], sourcemap: false },
   test: { environment: 'node', include: ['src/**/*.test.ts'] },
 });

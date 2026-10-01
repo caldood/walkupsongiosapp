@@ -73,7 +73,7 @@ export function updateMediaSession(state: AudioState) {
 // ── Audio output label ───────────────────────────────────────────────────────
 /**
  * Best-effort description of where sound is going. Browsers (especially iOS Safari) do not expose
- * the active output, so the honest default is "iPhone (current output)". The app never depends on this.
+ * the active output, so the honest default is the device name (current system output). The app never depends on this.
  */
 export async function describeAudioOutput(): Promise<string> {
   try {
@@ -84,7 +84,15 @@ export async function describeAudioOutput(): Promise<string> {
   } catch {
     /* ignore */
   }
-  return 'iPhone';
+  return deviceName();
+}
+
+/** "iPhone", "iPad", "Mac" or "This device" – what the system output belongs to when no named output is exposed. */
+export function deviceName(ua: string = typeof navigator === 'undefined' ? '' : navigator.userAgent): string {
+  if (/iPhone/.test(ua)) return 'iPhone';
+  if (/iPad/.test(ua)) return 'iPad';
+  if (/Macintosh/.test(ua)) return typeof navigator !== 'undefined' && navigator.maxTouchPoints > 1 ? 'iPad' : 'Mac';
+  return 'This device';
 }
 
 /** Short test tone so the coach can confirm the Bluetooth speaker is connected. */

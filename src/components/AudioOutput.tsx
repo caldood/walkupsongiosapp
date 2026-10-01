@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { describeAudioOutput } from '../audio/platform';
+import { describeAudioOutput, deviceName } from '../audio/platform';
 
 /** "🔊 Audio Output: iPhone" — informational only; the app never depends on detection. */
 export function AudioOutput({ compact }: { compact?: boolean }) {
-  const [label, setLabel] = useState('iPhone');
+  const [label, setLabel] = useState(() => deviceName());
   useEffect(() => {
     let alive = true;
     const refresh = () => void describeAudioOutput().then((l) => alive && setLabel(l));
@@ -15,7 +15,7 @@ export function AudioOutput({ compact }: { compact?: boolean }) {
     };
   }, []);
   return (
-    <div className={`output ${compact ? 'compact' : ''}`} title="Sound plays through your iPhone's current output (e.g. a connected Bluetooth speaker).">
+    <div className={`output ${compact ? 'compact' : ''}`} title="Sound plays through this device's current output (e.g. a connected Bluetooth speaker).">
       <span aria-hidden="true">🔊</span> {compact ? '' : 'Audio Output: '}
       <strong>{label}</strong>
     </div>

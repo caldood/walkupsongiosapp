@@ -1,7 +1,7 @@
 # Game Day Music
 
-A Little League game-day music controller that runs in **iPhone Safari** (and any modern browser) as an
-offline-capable PWA. Plug your phone into a Bluetooth speaker and run two things with almost no friction:
+A Little League game-day music controller that runs in **Safari** (macOS and iPhone/iPad; also Chrome/Edge/Firefox) as an
+offline-capable web app. It is a plain website, not a native iOS app. Connect your laptop or phone to a Bluetooth speaker and run two things with almost no friction:
 
 * **Defense Music** – a continuous playlist while the team is in the field or warming up.
 * **Walk-Up Music** – tap once to play the current batter's song clip (e.g. Enter Sandman 0:42–1:02), tap once for the next batter.
@@ -22,7 +22,15 @@ npm run build      # production build in dist/
 npm run preview    # serve dist/ locally (service worker only runs in production builds)
 ```
 
-Requires Node 20+.
+Requires Node 20+. Open the printed URL in Safari. (Teams, songs and audio are stored per browser and per address,
+so `localhost:5173`, a LAN IP and the deployed site each start empty — export/import a team to move it.)
+
+### Playing local files
+
+**Songs → Add Music** copies MP3/M4A/AAC/WAV files into the browser's IndexedDB; playback uses that copy, so the
+original file can move or be deleted. To keep a tap-to-play start instant (Safari only allows `play()` directly
+inside a click/tap), the app pre-loads the whole batting order and the start of the defense playlist whenever the
+lineup or audio changes.
 
 ## Deploy to GitHub Pages
 
@@ -122,7 +130,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 75 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 81 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 defense playlist progression (repeat, shuffle, skipping missing audio), import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

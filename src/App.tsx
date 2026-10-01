@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { bindMediaSession, updateMediaSession } from './audio/platform';
 import { audioManager, backend, playback, store } from './state/app';
-import { installAutoAdvance } from './state/gameActions';
+import { installAutoAdvance, preloadBatters } from './state/gameActions';
 import { useAppState } from './state/hooks';
 import { NavProvider, useNav } from './Nav';
 import { GameSetup } from './screens/GameSetup';
@@ -44,7 +44,7 @@ function Router() {
 }
 
 export function App() {
-  const { ready, settings } = useAppState();
+  const { ready, settings, teams, audioIds } = useAppState();
 
   useEffect(() => {
     void store.init();
@@ -61,6 +61,11 @@ export function App() {
       window.removeEventListener('pointerdown', unlock, { capture: true });
     };
   }, []);
+
+  // Keep audio warm whenever the team, lineup or stored audio changes.
+  useEffect(() => {
+    if (ready) preloadBatters();
+  }, [ready, teams, audioIds]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = settings.theme;

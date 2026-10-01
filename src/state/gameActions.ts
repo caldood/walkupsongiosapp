@@ -1,4 +1,4 @@
-import { currentBatter, upNext } from '../core/battingOrder';
+import { currentBatter, lineup } from '../core/battingOrder';
 import { resolveClip } from '../core/clip';
 import type { GameMode, Player, Team } from '../core/types';
 import { audioManager, playback, store } from './app';
@@ -27,13 +27,19 @@ export function playCurrentWalkUp() {
   return batter ? playWalkUpFor(team, batter) : ('no-song' as const);
 }
 
-/** Warms the audio cache for the current and next batters so a tap starts instantly (required on iOS). */
+/**
+ * Warms the audio cache for the whole batting order (current batter first) and the start of the
+ * defense playlist, so a tap can call audio.play() synchronously inside the gesture. Safari
+ * (desktop and iOS) rejects play() that happens after an await outside the tap.
+ */
 export function preloadBatters() {
   const team = store.activeTeam;
   if (!team) return;
   const i = store.getState().game.batterIndex;
-  const batters = [currentBatter(team, i), ...upNext(team, i, 2)];
-  playback.preload(batters.map((b) => b?.walkUpSongId));
+  const order = lineup(team);
+  const rotated = order.slice(i).concat(order.slice(0, i));
+  const playlist = team.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId);
+  playback.preload([...rotated.map((b) => b.walkUpSongId), ...(playlist?.songIds.slice(0, 3) ?? [])]);
 }
 
 export function nextBatter() {
