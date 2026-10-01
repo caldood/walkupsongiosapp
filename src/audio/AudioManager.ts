@@ -27,7 +27,7 @@ export interface TrackRequest {
   end?: number | null;
   /** Optional announcer-style sound mixed over the track. */
   overlay?: Overlay;
-  /** Seconds to fade out before `end` (requires `end`). */
+  /** Seconds to fade out before the clip end (or the end of the media if there is no `end`). */
   fadeOut?: number;
 }
 
@@ -148,7 +148,8 @@ export class AudioManager {
     this.stopTimer();
     this.backend.pause();
     this.opts.overlay?.stop();
-    this.fadeLength = req.end != null && req.fadeOut && req.fadeOut > 0 ? req.fadeOut : 0;
+    // With no clip end the track plays to the end of the media; the end is learned from its duration.
+    this.fadeLength = req.fadeOut && req.fadeOut > 0 ? req.fadeOut : 0;
     this.fadeScheduled = false;
     this.opts.overlay?.prepare(!!req.overlay || this.fadeLength > 0);
     this.pendingOverlay = req.overlay;
@@ -292,7 +293,7 @@ export class AudioManager {
         }
         if (Number.isFinite(duration)) {
           const end = this.end != null ? Math.min(this.end, duration) : duration;
-          this.end = this.end != null ? end : null;
+          this.end = this.end != null || this.fadeLength > 0 ? end : null; // fading needs a known end
           this.set({ length: Math.max(0, end - this.start) });
         }
         break;

@@ -48,7 +48,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
   const delayError = !Number.isFinite(delaySec) || delaySec < 0 ? 'Enter a number of seconds, like 2.' : null;
   const dirtyName = !name.trim();
 
-  function save() {
+  function save(opts: { stay?: boolean } = {}) {
     if (dirtyName || timeError || delayError) return;
     const fields = {
       name: name.trim(),
@@ -63,7 +63,22 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
     if (existing) store.savePlayer({ ...existing, ...fields });
     else store.savePlayer(fields);
     playback.stopAll();
-    nav.back();
+    if (!opts.stay) nav.back();
+  }
+
+  /** Save this player and immediately start a blank one (fast roster entry). */
+  function saveAndNew() {
+    if (dirtyName || timeError || delayError) return;
+    save({ stay: true });
+    setName('');
+    setNumber('');
+    setPhoto(undefined);
+    setSongId(null);
+    setStart('');
+    setEnd('');
+    setAnnouncerId(null);
+    setDelay('');
+    document.querySelector('.content')?.scrollTo(0, 0);
   }
 
   function test() {
@@ -91,7 +106,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         nav.back();
       }}
       right={
-        <button className="btn-text strong" onClick={save} disabled={dirtyName || !!timeError || !!delayError}>
+        <button className="btn-text strong" onClick={() => save()} disabled={dirtyName || !!timeError || !!delayError}>
           Save
         </button>
       }
@@ -192,6 +207,13 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         </Section>
       )}
 
+      {!existing && (
+        <Section>
+          <button className="btn wide" onClick={saveAndNew} disabled={dirtyName || !!timeError || !!delayError}>
+            <Icon name="plus" size={20} /> Save & add another
+          </button>
+        </Section>
+      )}
       {existing && (
         <Section>
           <button

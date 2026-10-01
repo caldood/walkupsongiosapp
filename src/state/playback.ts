@@ -80,8 +80,8 @@ export class PlaybackController {
   }
 
   /** Plays a whole song from the start (library preview). Never triggers walk-up auto-advance. */
-  previewSong(song: Song): void {
-    const base = { key: song.id, ref: 'preview', kind: 'walkup' as const, title: song.name, subtitle: song.artist, start: 0, end: null };
+  previewSong(song: Song, fadeOut = 0): void {
+    const base = { key: song.id, ref: 'preview', kind: 'walkup' as const, title: song.name, subtitle: song.artist, start: 0, end: null, fadeOut };
     const cached = this.resolver.peek(song.id);
     if (cached) this.audio.play({ ...base, url: cached });
     else void this.resolver.get(song.id).then((url) => this.audio.play({ ...base, url }));

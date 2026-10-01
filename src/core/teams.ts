@@ -71,3 +71,20 @@ export function duplicateTeam(team: Team, id: IdGenerator = newId): Team {
     settings: { ...team.settings },
   };
 }
+
+/**
+ * Brings a team saved by an older version up to date: settings added since then get their defaults
+ * (so e.g. teams created before the fade-out feature still fade), and retired fields are dropped.
+ */
+export function normalizeTeam(team: Team): Team {
+  const rest: Record<string, unknown> = { ...team };
+  delete rest.defensePlaylists;
+  delete rest.activeDefensePlaylistId;
+  const saved = (team.settings ?? {}) as Partial<Team['settings']>;
+  const settings = { ...DEFAULT_TEAM_SETTINGS };
+  for (const key of Object.keys(DEFAULT_TEAM_SETTINGS) as (keyof typeof DEFAULT_TEAM_SETTINGS)[]) {
+    const v = saved[key];
+    if (typeof v === typeof DEFAULT_TEAM_SETTINGS[key] && !(typeof v === 'number' && !Number.isFinite(v))) (settings[key] as unknown) = v;
+  }
+  return { ...(rest as unknown as Team), settings };
+}

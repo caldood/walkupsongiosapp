@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { benchPlayers, lineup } from '../core/battingOrder';
+import { parseRosterText } from '../core/roster';
 import { store } from '../state/app';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
@@ -11,6 +13,8 @@ export function Players() {
   const team = useActiveTeam();
   const { songs } = useAppState();
   const nav = useNav();
+  const [pasting, setPasting] = useState(false);
+  const [pasted, setPasted] = useState('');
   if (!team) {
     return (
       <Screen title="Players">
@@ -25,6 +29,9 @@ export function Players() {
   return (
     <Screen title="Players" right={<button className="btn-text strong" onClick={() => nav.go({ name: 'player-edit' })}><Icon name="plus" size={18} /> Add</button>}>
       <p className="team-label">{team.name}</p>
+      <button className="btn wide" onClick={() => setPasting(true)}>
+        <Icon name="clipboard" size={20} /> Paste a list of players
+      </button>
       <Section title="Batting order" hint="Drag ⠿ to reorder. Tap a player to edit their song and clip.">
         {order.length === 0 && <p className="muted">No one in the batting order yet.</p>}
         <SortableList
@@ -68,6 +75,36 @@ export function Players() {
             ))}
           </ul>
         </Section>
+      )}
+      {pasting && (
+        <div className="modal-backdrop sheet-backdrop" onClick={() => setPasting(false)}>
+          <div className="sheet" role="dialog" aria-modal="true" aria-label="Paste players" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-head">
+              <h2>Paste players</h2>
+              <button className="btn-text" onClick={() => setPasting(false)}>
+                Close
+              </button>
+            </div>
+            <p className="hint">One player per line, in batting order. Numbers can come first or last: “7 Brevan Sun”, “Luke 3”, or just a name.</p>
+            <textarea className="field" rows={8} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder={'7 Brevan Sun\n3 Luke Park\n9 Ethan Cho'} autoFocus />
+            {(() => {
+              const parsed = parseRosterText(pasted);
+              return (
+                <button
+                  className="btn btn-primary wide"
+                  disabled={parsed.length === 0}
+                  onClick={() => {
+                    parsed.forEach((p) => store.savePlayer({ name: p.name, number: p.number }));
+                    setPasted('');
+                    setPasting(false);
+                  }}
+                >
+                  Add {parsed.length} player{parsed.length === 1 ? '' : 's'}
+                </button>
+              );
+            })()}
+          </div>
+        </div>
       )}
     </Screen>
   );

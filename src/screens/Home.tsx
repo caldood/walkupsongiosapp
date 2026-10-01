@@ -11,11 +11,19 @@ import { restartSetupWizard } from './GameSetup';
 
 export function Home() {
   const nav = useNav();
-  const { teams, audioIds } = useAppState();
+  const { teams, songs, audioIds } = useAppState();
   const team = useActiveTeam();
   const missing = store.missingSongs(team).length;
   const order = team ? lineup(team) : [];
   const ready = order.filter((p) => isPlayable(store.song(p.walkUpSongId), audioIds)).length;
+
+  const steps = [
+    { done: !!team, label: 'Create your team', go: () => nav.go({ name: 'teams' }) },
+    { done: songs.some((s) => (s.role ?? 'music') === 'music' && s.sourceType === 'local' && audioIds.has(s.localReference ?? s.id)), label: 'Add songs to your library', go: () => nav.go({ name: 'songs' }) },
+    { done: order.length > 0, label: 'Add players to the batting order', go: () => nav.go({ name: 'players' }) },
+    { done: order.length > 0 && order.every((p) => p.walkUpSongId), label: 'Give every batter a walk-up song', go: () => nav.go({ name: 'players' }) },
+  ];
+  const doneCount = steps.filter((s) => s.done).length;
 
   function enter() {
     preloadBatters();
@@ -83,6 +91,28 @@ export function Home() {
           </button>
           <p className="hero-hint">{!team ? 'Create a team first.' : order.length === 0 ? 'Add players to the batting order first.' : 'Then tap any name to play their walk-up.'}</p>
         </section>
+
+        {doneCount < steps.length && (
+          <section className="checklist" aria-label="Getting ready">
+            <h2>
+              Getting ready <span>{doneCount} of {steps.length}</span>
+            </h2>
+            <div className="meter" aria-hidden="true">
+              <div style={{ width: `${(doneCount / steps.length) * 100}%` }} />
+            </div>
+            <ol>
+              {steps.map((s) => (
+                <li key={s.label}>
+                  <button onClick={s.go} className={s.done ? 'done' : ''}>
+                    <span className="tick">{s.done && <Icon name="check" size={16} />}</span>
+                    <span className="lbl2">{s.label}</span>
+                    {!s.done && <Icon name="chev-r" size={18} />}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
 
         <nav className="home-grid" aria-label="Setup">
           {tiles.map((t) => (

@@ -75,7 +75,7 @@ export function MusicLibrary() {
                     </span>
                   </button>
                   {has && (
-                    <button className={`btn btn-small ${playingThis ? 'btn-stop' : ''}`} onClick={() => (playingThis ? playback.stopAll() : playback.previewSong(s))}>
+                    <button className={`btn btn-small ${playingThis ? 'btn-stop' : ''}`} onClick={() => (playingThis ? playback.stopAll() : playback.previewSong(s, store.activeTeam?.settings.fadeOutSeconds))}>
                       <Icon name={playingThis ? 'stop' : 'play'} size={18} />
                     </button>
                   )}

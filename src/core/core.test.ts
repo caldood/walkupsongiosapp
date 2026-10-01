@@ -4,7 +4,7 @@ import { describeClip, fitAnnouncer, resolveClip } from './clip';
 import { formatTime, parseTime } from './format';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from './game';
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
-import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, removePlayer } from './teams';
+import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, normalizeTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
 import type { GameState, Team } from './types';
 
@@ -305,5 +305,25 @@ describe('announcer', () => {
     expect(p.announcerDelay).toBe(2.5);
     expect(r.team.settings.announcerDuck).toBe(0.2);
     expect(r.missingSongIds).toHaveLength(2);
+  });
+});
+
+describe('normalizeTeam (settings migration)', () => {
+  it('gives teams saved before newer settings existed the defaults, so fade-out is on', () => {
+    const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 20, autoAdvance: true, autoPlayNext: false } } as unknown as Team;
+    const t = normalizeTeam(old);
+    expect(t.settings).toMatchObject({ defaultClipSeconds: 20, autoAdvance: true, fadeOutSeconds: 2, announcerDuck: 0.35 });
+  });
+  it('drops retired defense fields and keeps valid saved values', () => {
+    const legacy = { ...createTeam('L'), defensePlaylists: [{ id: 'p' }], activeDefensePlaylistId: 'p', settings: { ...createTeam('x').settings, fadeOutSeconds: 0, defenseShuffle: true } } as unknown as Team;
+    const t = normalizeTeam(legacy) as unknown as Record<string, unknown>;
+    expect(t.defensePlaylists).toBeUndefined();
+    expect(t.activeDefensePlaylistId).toBeUndefined();
+    expect((t.settings as Record<string, unknown>).fadeOutSeconds).toBe(0); // an explicit "Off" is respected
+    expect((t.settings as Record<string, unknown>).defenseShuffle).toBeUndefined();
+  });
+  it('ignores garbage values', () => {
+    const bad = { ...createTeam('B'), settings: { fadeOutSeconds: 'x', announcerDuck: NaN } } as unknown as Team;
+    expect(normalizeTeam(bad).settings).toMatchObject({ fadeOutSeconds: 2, announcerDuck: 0.35 });
   });
 });

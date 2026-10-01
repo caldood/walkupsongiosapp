@@ -170,3 +170,28 @@ describe('AudioManager fade-out', () => {
     expect(engine.calls).toContain('prepare:false');
   });
 });
+
+describe('AudioManager fade-out when the whole song plays', () => {
+  it('learns the end from the media duration and fades the last seconds', async () => {
+    backend.duration = 30;
+    audio.play(req({ overlay: undefined, fadeOut: 3, start: 0, end: null }));
+    await settle();
+    backend.emit('metadata'); // duration now known
+    backend.currentTime = 1;
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.filter((c) => c.startsWith('fade'))).toEqual(['fade:26.0+3.0']);
+    backend.currentTime = 30; // reached the end
+    vi.advanceTimersByTime(100);
+    expect(audio.getState().status).toBe('idle');
+  });
+
+  it('also fades when the clip end is later than the song really is', async () => {
+    backend.duration = 20;
+    audio.play(req({ overlay: undefined, fadeOut: 2, start: 10, end: 90 }));
+    await settle();
+    backend.emit('metadata');
+    backend.currentTime = 10.5;
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.filter((c) => c.startsWith('fade'))).toEqual(['fade:7.5+2.0']); // 9.5s left, fade the last 2
+  });
+});

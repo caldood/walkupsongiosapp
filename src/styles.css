@@ -399,3 +399,37 @@ textarea.field { font-size: 15px; font-family: var(--mono); }
   .content { padding-left: 24px; padding-right: 24px; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ── getting-ready checklist (Home) ─────────────────────────────────────── */
+.checklist { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 14px 14px 8px; box-shadow: inset 0 1px 0 var(--hi); }
+.checklist h2 { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--display); font-size: 17px; letter-spacing: 0.14em; text-transform: uppercase; }
+.checklist h2 span { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
+.meter { height: 6px; border-radius: 3px; background: var(--inset); margin: 10px 0 6px; overflow: hidden; }
+.meter div { height: 100%; background: linear-gradient(90deg, var(--grass-d), var(--grass)); border-radius: 3px; }
+.checklist ol { display: flex; flex-direction: column; }
+.checklist li + li { border-top: 1px solid var(--line); }
+.checklist li button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 2px; min-height: 52px; background: none; border: 0; text-align: left; color: var(--chalk); font-weight: 600; }
+.checklist li button.done { color: var(--muted); font-weight: 500; }
+.checklist li button.done .lbl2 { text-decoration: line-through; }
+.checklist .lbl2 { flex: 1; }
+.tick { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--line-2); display: grid; place-items: center; flex: none; }
+.checklist li button.done .tick { background: var(--grass); border-color: var(--grass); color: #fff; }
+
+/* ── floating now-playing bar (Game Mode, when the main controls are scrolled away) ─ */
+.nowbar {
+  position: fixed; left: 12px; right: 12px; bottom: calc(12px + var(--safe-b)); z-index: 20; max-width: 876px; margin: 0 auto;
+  display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 14px; border-radius: 20px; color: #f3efe4;
+  background: linear-gradient(180deg, rgba(26, 40, 68, 0.96), rgba(8, 14, 28, 0.97)); border: 1px solid rgba(255, 184, 28, 0.5);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.nowbar > .icon { color: var(--amber); }
+.nb-info { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.nb-info b { font-family: var(--display); font-size: 19px; letter-spacing: 0.04em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-info span { font-size: 13px; color: #9aa8c2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nb-time { font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--amber); }
+.nowbar .btn-icon { background: rgba(255, 255, 255, 0.08); color: #fff; border-color: rgba(255, 255, 255, 0.18); }
+.nowbar .btn-icon.stop { background: linear-gradient(180deg, #f0583e, var(--clay-d)); border-color: #ff8a73; }
+
+/* Home sections keep their natural height; the page scrolls instead of squashing them. */
+.home-main > * { flex: none; }

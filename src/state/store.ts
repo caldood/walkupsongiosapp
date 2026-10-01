@@ -1,4 +1,4 @@
-import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, removePlayer, updatePlayer } from '../core/teams';
+import { addPlayer, assignWalkUp, createPlayer, createTeam, normalizeTeam, detachSong, duplicateTeam, removePlayer, updatePlayer } from '../core/teams';
 import { clampIndex, lineup, moveInOrder, reconcileOrder } from '../core/battingOrder';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from '../core/game';
 import { createLocalSong, createSpotifySong, findMissingSongs, matchFilesToSongs } from '../core/songs';
@@ -89,7 +89,7 @@ export class AppStore {
         data.game && data.game.teamId === active?.id ? data.game : initialGame(active?.id ?? null);
       this.set({
         ready: true,
-        teams: data.teams.map(reconcileOrder),
+        teams: data.teams.map((t) => reconcileOrder(normalizeTeam(t))),
         songs: data.songs,
         audioIds: new Set(data.audioIds),
         game: { ...game, batterIndex: clampIndex(active ? lineup(active).length : 0, game.batterIndex) },

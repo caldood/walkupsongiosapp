@@ -81,6 +81,16 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
   Events, so it works with touch on iPhone and with a mouse; the list auto-scrolls near the edges, and the handle also responds
   to ↑ / ↓ on a keyboard.
 
+* **Whole-song fade:** if a clip plays through to the very end of the song (or the end time is past the song's end),
+  it still fades out over the last seconds. Teams saved by older versions are upgraded on load so they get the fade too.
+
+## Speed-ups
+
+* **Paste a list of players** (Players screen): one per line, number first or last (“7 Brevan Sun”, “Luke 3”). **Save & add another** in the player editor for one-by-one entry.
+* **Floating now-playing bar:** if you scroll the batting list so the big controls are off screen, a bar with the player, time left, Pause and Stop stays on screen.
+* **Getting ready checklist** on Home until team, songs, players and walk-up songs are all set.
+* **Keyboard (Mac):** Space play/pause · S or Esc stop · N or → next batter · P or ← previous batter.
+
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
@@ -150,7 +160,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 91 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 99 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
