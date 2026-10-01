@@ -5,6 +5,7 @@ import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { AudioOutput } from '../components/AudioOutput';
 import { Banner } from '../components/ui';
+import { restartSetupWizard } from './GameSetup';
 
 export function Home() {
   const nav = useNav();
@@ -55,7 +56,7 @@ export function Home() {
         </button>
 
         <nav className="home-grid" aria-label="Setup">
-          <button className="tile" onClick={() => nav.go({ name: 'setup' })}>📋<span>Game setup</span></button>
+          <button className="tile" onClick={() => { restartSetupWizard(); nav.go({ name: 'setup' }); }}>📋<span>Game setup</span></button>
           <button className="tile" onClick={() => nav.go({ name: 'teams' })}>👥<span>Team setup</span></button>
           <button className="tile" onClick={() => nav.go({ name: 'players' })}>🧢<span>Players</span></button>
           <button className="tile" onClick={() => nav.go({ name: 'songs' })}>🎵<span>Songs</span></button>

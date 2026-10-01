@@ -12,12 +12,22 @@ import { SongPicker } from '../components/SongPicker';
 
 const STEPS = ['Team', 'Batting order', 'Songs', 'Defense playlist', 'Go!'];
 
+// Remembered across navigation (e.g. Add player → back) so the wizard doesn't jump to step 1.
+let rememberedStep = 0;
+export const restartSetupWizard = () => {
+  rememberedStep = 0;
+};
+
 /** Pre-game setup: five quick steps, everything is remembered afterwards. */
 export function GameSetup() {
   const { teams, settings, audioIds } = useAppState();
   const team = useActiveTeam();
   const nav = useNav();
-  const [step, setStep] = useState(0);
+  const [step, setStepState] = useState(rememberedStep);
+  const setStep = (n: number) => {
+    rememberedStep = n;
+    setStepState(n);
+  };
   const [pickFor, setPickFor] = useState<string | null>(null);
 
   const order = team ? lineup(team) : [];
@@ -143,12 +153,12 @@ export function GameSetup() {
         <Section>
           <div className="summary">
             <p><strong>{team.name}</strong></p>
-            <p>{order.length} batters · default walk-up {team.settings.defaultClipSeconds}s</p>
+            <p>{order.length} batter{order.length === 1 ? "" : "s"} · default walk-up {team.settings.defaultClipSeconds}s</p>
             <p>Defense: {team.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId)?.name ?? 'none'}</p>
             {missing.length > 0 ? <p className="warn-text">⚠ {missing.length} song(s) missing on this device.</p> : <p>✓ All songs ready.</p>}
           </div>
           <p className="hint">Connect your Bluetooth speaker now, then check the sound with Settings › Test speaker.</p>
-          <button className="btn-giant btn-play" onClick={() => { store.resetGame(); preloadBatters(); switchMode('walkup'); nav.go({ name: 'game' }); }}>
+          <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); switchMode('walkup'); nav.go({ name: 'game' }); }}>
             ENTER GAME MODE
           </button>
         </Section>
