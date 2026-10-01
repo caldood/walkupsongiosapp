@@ -73,6 +73,19 @@ Settings include: default walk-up length (10/15/20/30s, per-player override), **
 next batter after a walk-up finishes), **Auto play next batter** (off by default, requires Auto advance), shuffle/repeat
 for defense, theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 
+## Announcer over walk-up music
+
+Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
+Add recordings with **Songs → Add announcer recordings** (they're kept apart from music, so they never show up in
+playlists), then pick one in the player editor and set when it starts (seconds after the music). Both play at the same
+time; the music dips while the announcer talks (Settings → *Music level while the announcer speaks*) and rises back
+afterwards. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
+
+How it works: the music still streams from the single `<audio>` element but is routed through a Web Audio `GainNode`
+(this is what makes ducking work on iPhone, where `audio.volume` is ignored); the announcer is decoded into an
+`AudioBuffer` ahead of time and started on the Web Audio clock. The routing is only set up once a player with an
+announcer is used. If an announcer file is missing the music plays alone and the screen says so.
+
 ## Import / export
 
 *Team → Import / export*. Exports a `.json` file with the team, players, batting order, clip times, song **metadata**
@@ -87,7 +100,7 @@ the rest are listed as *missing* until you re-select the audio files (matched by
 | **Local file access** | Safari (iOS) has no persistent file handles (no File System Access API). The app *copies* picked files into **IndexedDB** instead. |
 | **Storage eviction** | Safari may evict site data for sites you haven't used in ~7 days, or under storage pressure — **unless the site is added to the Home Screen**, which is exempt from the 7‑day rule. The app also requests persistent storage. Keep an exported team file as backup; if audio is ever gone the app shows "Walk-up song not available on this device." with *Choose Audio File*. |
 | **Audio start needs a tap** | iOS only lets audio start from a user tap. The app starts playback directly in the tap handler and pre-loads the current/next batter's audio so it starts instantly. If the very first play needs a second tap it says "Tap Play to start audio." After the first tap, auto-advance / playlist progression work. |
-| **Volume / fades** | iOS Safari ignores script volume; use the phone's buttons. No fade-out (cut at clip end) in the MVP. |
+| **Volume / fades** | iOS Safari ignores script volume on plain audio; use the phone's buttons. The only volume the app controls is the music dip under the announcer (via Web Audio). No fade-out at clip end yet. |
 | **Screen lock / background** | Audio keeps playing with the screen locked, but iOS throttles timers, so a clip end may overshoot by ~1s while locked. Lock-screen play/pause works via Media Session. Keep the screen on during walk-ups for exact timing. |
 | **Interruptions** | Calls/Siri pause playback (the app shows Paused; tap Resume). Disconnecting the speaker pauses too. |
 | **Audio output** | Browsers can't reliably report the active output. The badge shows "iPhone" (current system output); never relied on. AirPlay/multi-speaker routing is done in iOS Control Center. |
@@ -130,7 +143,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 81 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 93 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 defense playlist progression (repeat, shuffle, skipping missing audio), import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
