@@ -14,6 +14,9 @@ class FakeEngine implements OverlayEngine {
   start(o: Overlay, elapsed: number) {
     this.calls.push(`start:${o.delay}@${elapsed}`);
   }
+  fadeOut(startIn: number, duration: number) {
+    this.calls.push(`fade:${startIn.toFixed(1)}+${duration.toFixed(1)}`);
+  }
   pause() {
     this.calls.push('pause');
   }
@@ -124,5 +127,46 @@ describe('AudioManager overlay (announcer over music)', () => {
     audio.resume();
     await settle();
     expect(engine.calls.filter((c) => c.startsWith('start'))).toHaveLength(1);
+  });
+});
+
+describe('AudioManager fade-out', () => {
+  it('prepares the mixer (so the fade is possible) and schedules the fade from the real position', async () => {
+    audio.play(req({ overlay: undefined, fadeOut: 2 })); // clip 10 → 30
+    expect(engine.calls).toContain('prepare:true');
+    await settle();
+    backend.currentTime = 10.2; // playback has reached the clip
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.filter((c) => c.startsWith('fade'))).toEqual(['fade:17.8+2.0']); // 19.8s left, fade the last 2s
+    backend.currentTime = 15;
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.filter((c) => c.startsWith('fade'))).toHaveLength(1); // only once
+  });
+
+  it('does not wait for the seek to land before scheduling (no fade from a bogus position)', async () => {
+    audio.play(req({ overlay: undefined, fadeOut: 2 }));
+    await settle();
+    backend.currentTime = 0.1; // browser hasn't honoured the start seek yet
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.some((c) => c.startsWith('fade'))).toBe(false);
+  });
+
+  it('shortens the fade when less than the fade time remains', async () => {
+    audio.play(req({ overlay: undefined, fadeOut: 5, start: 10, end: 12 }));
+    await settle();
+    backend.currentTime = 10.5;
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.filter((c) => c.startsWith('fade'))).toEqual(['fade:0.0+1.5']);
+  });
+
+  it('never fades without a clip end, or when fade is off', async () => {
+    audio.play(req({ overlay: undefined, fadeOut: 2, end: null, start: 0 }));
+    await settle();
+    audio.play(req({ overlay: undefined, fadeOut: 0 }));
+    await settle();
+    backend.currentTime = 11;
+    vi.advanceTimersByTime(100);
+    expect(engine.calls.some((c) => c.startsWith('fade'))).toBe(false);
+    expect(engine.calls).toContain('prepare:false');
   });
 });

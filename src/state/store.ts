@@ -195,6 +195,11 @@ export class AppStore {
     this.mutateActive((t) => ({ ...t, battingOrder: order }));
   }
 
+  /** Drag-and-drop: move the batter at `from` to position `to`. */
+  reorderBatter(from: number, to: number) {
+    this.mutateActive((t) => ({ ...t, battingOrder: moveInOrder(t.battingOrder, from, to) }));
+  }
+
   moveBatter(index: number, delta: number) {
     this.mutateActive((t) => ({ ...t, battingOrder: moveInOrder(t.battingOrder, index, index + delta) }));
   }

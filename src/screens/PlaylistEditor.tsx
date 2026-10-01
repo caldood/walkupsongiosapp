@@ -6,6 +6,7 @@ import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { EmptyState, Screen, Section, useConfirm } from '../components/ui';
 import { SongPicker } from '../components/SongPicker';
+import { SortableList } from '../components/SortableList';
 
 export function PlaylistEditor() {
   const team = useActiveTeam();
@@ -25,6 +26,13 @@ export function PlaylistEditor() {
   }
   const playlist = team.defensePlaylists.find((p) => p.id === (selectedId ?? team.activeDefensePlaylistId)) ?? team.defensePlaylists[0];
   const song = (id: string) => songs.find((s) => s.id === id);
+  // Stable keys even when the same song appears twice in a playlist.
+  const seen = new Map<string, number>();
+  const entries = (playlist?.songIds ?? []).map((id) => {
+    const n = (seen.get(id) ?? 0) + 1;
+    seen.set(id, n);
+    return { id, key: `${id}#${n}` };
+  });
 
   return (
     <Screen title="Defense playlists">
@@ -64,25 +72,26 @@ export function PlaylistEditor() {
               </button>
             )}
             <input className="field" defaultValue={playlist.name} key={playlist.id} aria-label="Playlist name" onBlur={(e) => e.target.value.trim() && store.savePlaylist({ ...playlist, name: e.target.value.trim() })} />
-            <ol className="order">
-              {playlist.songIds.map((id, i) => {
-                const s = song(id);
+            <SortableList
+              items={entries}
+              getKey={(e) => e.key}
+              label={(e) => song(e.id)?.name ?? 'song'}
+              onMove={(from, to) => store.savePlaylist({ ...playlist, songIds: moveInOrder(playlist.songIds, from, to) })}
+              render={(e, i, handle) => {
+                const s = song(e.id);
                 return (
-                  <li key={`${id}-${i}`} className="row player-row">
+                  <>
+                    {handle}
                     <span className="pos">{i + 1}</span>
                     <span className="grow">
                       <span className="row-title">{s?.name ?? 'Missing song'}</span>
                       <span className="row-sub">{s?.duration ? formatTime(s.duration) : ''}</span>
                     </span>
-                    <div className="stack">
-                      <button className="btn-icon sm" disabled={i === 0} aria-label="Move up" onClick={() => store.savePlaylist({ ...playlist, songIds: moveInOrder(playlist.songIds, i, i - 1) })}>▲</button>
-                      <button className="btn-icon sm" disabled={i === playlist.songIds.length - 1} aria-label="Move down" onClick={() => store.savePlaylist({ ...playlist, songIds: moveInOrder(playlist.songIds, i, i + 1) })}>▼</button>
-                    </div>
                     <button className="btn-icon sm" aria-label="Remove song" onClick={() => store.savePlaylist({ ...playlist, songIds: playlist.songIds.filter((_, j) => j !== i) })}>✕</button>
-                  </li>
+                  </>
                 );
-              })}
-            </ol>
+              }}
+            />
             {playlist.songIds.length === 0 && <p className="muted">Empty playlist.</p>}
             <button className="btn btn-primary wide" onClick={() => setPicking(true)}>＋ Add songs</button>
             <button

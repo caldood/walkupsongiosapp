@@ -8,6 +8,7 @@ import { useNav } from '../Nav';
 import { Screen, Section } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
 import { SongPicker } from '../components/SongPicker';
+import { SortableList } from '../components/SortableList';
 
 const STEPS = ['Team', 'Batting order', 'Songs', 'Defense playlist', 'Go!'];
 
@@ -64,18 +65,21 @@ export function GameSetup() {
       )}
 
       {step === 1 && team && (
-        <Section hint="Players who aren't here today can sit on the bench. Fine-tune the order in Players.">
-          <ol className="order">
-            {order.map((p, i) => (
-              <li key={p.id} className="row player-row">
+        <Section hint="Drag ⠿ to reorder. Players who aren't here today can sit on the bench.">
+          <SortableList
+            items={order}
+            getKey={(p) => p.id}
+            label={(p) => p.name}
+            onMove={(from, to) => store.reorderBatter(from, to)}
+            render={(p, i, handle) => (
+              <>
+                {handle}
                 <span className="pos">{i + 1}</span>
                 <span className="grow row-title"><span className="num">#{p.number || '–'}</span> {p.name}</span>
-                <button className="btn-icon sm" disabled={i === 0} onClick={() => store.moveBatter(i, -1)} aria-label={`Move ${p.name} up`}>▲</button>
-                <button className="btn-icon sm" disabled={i === order.length - 1} onClick={() => store.moveBatter(i, 1)} aria-label={`Move ${p.name} down`}>▼</button>
                 <button className="btn-icon sm" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}>✕</button>
-              </li>
-            ))}
-          </ol>
+              </>
+            )}
+          />
           {benchPlayers(team).map((p) => (
             <div key={p.id} className="row player-row muted-row">
               <span className="grow row-title"><span className="num">#{p.number || '–'}</span> {p.name} <span className="muted">(bench)</span></span>

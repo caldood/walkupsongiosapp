@@ -61,6 +61,8 @@ export interface TeamSettings {
   defenseRepeat: boolean;
   /** Music level (0–1) while the announcer speaks. 1 = no ducking. */
   announcerDuck: number;
+  /** Seconds of fade-out at the end of a walk-up clip. 0 = hard cut. */
+  fadeOutSeconds: number;
 }
 
 export interface Team {
@@ -102,6 +104,7 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   defenseShuffle: false,
   defenseRepeat: true,
   announcerDuck: 0.35,
+  fadeOutSeconds: 2,
 };
 
 export const DEFAULT_ANNOUNCER_DELAY = 2;

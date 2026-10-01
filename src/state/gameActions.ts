@@ -21,7 +21,9 @@ export function walkUpRequest(
   const hasAnnouncer = !!announcer && announcer.sourceType === 'local';
   const delay = player.announcerDelay ?? DEFAULT_ANNOUNCER_DELAY;
   // Never cut the announcement off: stretch the clip if the announcer would outlast it.
-  if (hasAnnouncer) clip = fitAnnouncer(clip, delay, announcer.duration);
+  const fadeOut = team.settings.fadeOutSeconds ?? 0;
+  // …and leave the fade-out room after it, so the name is spoken at full volume.
+  if (hasAnnouncer) clip = fitAnnouncer(clip, delay, announcer.duration, 0.5 + fadeOut);
   return {
     playerId: opts.preview ? 'preview' : player.id,
     songId: song.id,
@@ -29,6 +31,7 @@ export function walkUpRequest(
     subtitle: player.name,
     start: clip.start,
     end: clip.end,
+    fadeOut,
     announcer: hasAnnouncer ? { songId: announcer.id, delay, duck: team.settings.announcerDuck } : undefined,
   };
 }

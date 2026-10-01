@@ -17,6 +17,21 @@ export function TeamSettingsForm() {
         <span className="row-sub">Used when a player has no custom end time.</span>
       </div>
       <div className="row stacked">
+        <span className="row-title">Fade out at the end of a walk-up</span>
+        <Segmented
+          label="Fade out"
+          value={s.fadeOutSeconds ?? 0}
+          options={[
+            { value: 0, label: 'Off' },
+            { value: 1, label: '1s' },
+            { value: 2, label: '2s' },
+            { value: 3, label: '3s' },
+          ]}
+          onChange={(v) => store.updateTeamSettings({ fadeOutSeconds: v })}
+        />
+        <span className="row-sub">The music eases out instead of cutting off.</span>
+      </div>
+      <div className="row stacked">
         <span className="row-title">Music level while the announcer speaks</span>
         <Segmented
           label="Announcer ducking"

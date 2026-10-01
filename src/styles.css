@@ -134,6 +134,12 @@ textarea.field { font-size: 15px; font-family: ui-monospace, monospace; }
 .muted-row { opacity: 0.8; }
 .missing-list { margin: 6px 0; padding-left: 18px; list-style: disc; font-size: 14px; }
 
+/* drag handle */
+.drag-handle { min-width: 44px; min-height: 48px; border: 0; background: none; color: var(--muted); font-size: 24px; line-height: 1; touch-action: none; cursor: grab; border-radius: 10px; flex: none; }
+.drag-handle:active { cursor: grabbing; color: var(--amber); }
+.sortable li { -webkit-user-select: none; user-select: none; position: relative; }
+.sortable li.dragging { z-index: 5; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); border-color: var(--amber); transition: none; opacity: 0.97; }
+
 /* toggle switch */
 .toggle { cursor: pointer; }
 .toggle input { position: absolute; opacity: 0; pointer-events: none; }

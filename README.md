@@ -73,6 +73,15 @@ Settings include: default walk-up length (10/15/20/30s, per-player override), **
 next batter after a walk-up finishes), **Auto play next batter** (off by default, requires Auto advance), shuffle/repeat
 for defense, theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 
+## Fade-out and reordering
+
+* **Fade-out:** walk-up clips ease out over 1–3 seconds (Settings → *Fade out at the end of a walk-up*, default 2s, or Off).
+  The fade is scheduled on the Web Audio clock from the real playback position, so it lands exactly on the clip end and
+  pauses/resumes with the music. When a clip has an announcer, the clip is stretched so the name finishes before the fade starts.
+* **Drag and drop:** drag the ⠿ handle to reorder the batting order (Players, Game setup) and defense playlists. It uses Pointer
+  Events, so it works with touch on iPhone and with a mouse; the list auto-scrolls near the edges, and the handle also responds
+  to ↑ / ↓ on a keyboard.
+
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
@@ -100,7 +109,7 @@ the rest are listed as *missing* until you re-select the audio files (matched by
 | **Local file access** | Safari (iOS) has no persistent file handles (no File System Access API). The app *copies* picked files into **IndexedDB** instead. |
 | **Storage eviction** | Safari may evict site data for sites you haven't used in ~7 days, or under storage pressure — **unless the site is added to the Home Screen**, which is exempt from the 7‑day rule. The app also requests persistent storage. Keep an exported team file as backup; if audio is ever gone the app shows "Walk-up song not available on this device." with *Choose Audio File*. |
 | **Audio start needs a tap** | iOS only lets audio start from a user tap. The app starts playback directly in the tap handler and pre-loads the current/next batter's audio so it starts instantly. If the very first play needs a second tap it says "Tap Play to start audio." After the first tap, auto-advance / playlist progression work. |
-| **Volume / fades** | iOS Safari ignores script volume on plain audio; use the phone's buttons. The only volume the app controls is the music dip under the announcer (via Web Audio). No fade-out at clip end yet. |
+| **Volume / fades** | iOS Safari ignores script volume on plain audio; use the phone's buttons. The only volume the app controls is the music dip under the announcer (via Web Audio). Walk-up clips fade out via Web Audio (see above). |
 | **Screen lock / background** | Audio keeps playing with the screen locked, but iOS throttles timers, so a clip end may overshoot by ~1s while locked. Lock-screen play/pause works via Media Session. Keep the screen on during walk-ups for exact timing. |
 | **Interruptions** | Calls/Siri pause playback (the app shows Paused; tap Resume). Disconnecting the speaker pauses too. |
 | **Audio output** | Browsers can't reliably report the active output. The badge shows "iPhone" (current system output); never relied on. AirPlay/multi-speaker routing is done in iOS Control Center. |
@@ -143,7 +152,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 93 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 101 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 defense playlist progression (repeat, shuffle, skipping missing audio), import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
@@ -155,6 +164,6 @@ service worker. **Always do a real-device check on Safari before game day** (see
 
 ## Roadmap
 
-Fade out at clip end (WebAudio gain), batter photos in Game Mode up-next list, per-song waveform trimmer, drag‑and‑drop reordering,
+Batter photos in Game Mode up-next list, per-song waveform trimmer, record announcers in the app,
 sound-effect pads (cheers, "Charge!"), multi-team quick switch inside Game Mode, backup/restore of audio, Spotify Web Playback
 integration, shared team links, and Apple Watch / second-phone remote.

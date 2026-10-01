@@ -82,6 +82,7 @@ export function parseTeamExport(text: string): TeamExport {
       autoPlayNext: bool(s.autoPlayNext, DEFAULT_TEAM_SETTINGS.autoPlayNext),
       defenseShuffle: bool(s.defenseShuffle, DEFAULT_TEAM_SETTINGS.defenseShuffle),
       defenseRepeat: bool(s.defenseRepeat, DEFAULT_TEAM_SETTINGS.defenseRepeat),
+      fadeOutSeconds: Math.min(10, Math.max(0, num(s.fadeOutSeconds, DEFAULT_TEAM_SETTINGS.fadeOutSeconds))),
       announcerDuck: Math.min(1, Math.max(0, num(s.announcerDuck, DEFAULT_TEAM_SETTINGS.announcerDuck))),
     },
   };

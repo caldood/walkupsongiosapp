@@ -27,6 +27,8 @@ export interface TrackRequest {
   end?: number | null;
   /** Optional announcer-style sound mixed over the track. */
   overlay?: Overlay;
+  /** Seconds to fade out before `end` (requires `end`). */
+  fadeOut?: number;
 }
 
 export interface AudioState {
@@ -73,6 +75,11 @@ export interface Overlay {
 export interface OverlayEngine {
   /** Called synchronously from the tap that starts/resumes playback. `needed` = this track has an overlay. */
   prepare(needed: boolean): void;
+  /**
+   * Fade the music to silence: start in `startIn` seconds and take `duration` seconds. Runs on the audio
+   * clock, so it pauses and resumes with the music.
+   */
+  fadeOut(startIn: number, duration: number): void;
   /** Whether an overlay can be added to a track that is already playing without cutting the music. */
   canAttachLate(): boolean;
   /** Start the overlay; `elapsed` = seconds of the clip already played. */
@@ -102,6 +109,8 @@ export class AudioManager {
   private volume = 1;
   private pendingOverlay: Overlay | undefined;
   private overlayStarted = false;
+  private fadeLength = 0;
+  private fadeScheduled = false;
 
   constructor(
     private backend: MediaBackend,
@@ -139,11 +148,14 @@ export class AudioManager {
     this.stopTimer();
     this.backend.pause();
     this.opts.overlay?.stop();
-    this.opts.overlay?.prepare(!!req.overlay);
+    this.fadeLength = req.end != null && req.fadeOut && req.fadeOut > 0 ? req.fadeOut : 0;
+    this.fadeScheduled = false;
+    this.opts.overlay?.prepare(!!req.overlay || this.fadeLength > 0);
     this.pendingOverlay = req.overlay;
     this.overlayStarted = false;
     const { url, ...track } = req;
     delete (track as { overlay?: Overlay }).overlay;
+    delete (track as { fadeOut?: number }).fadeOut;
     this.start = Math.max(0, req.start ?? 0);
     this.end = req.end != null && req.end > this.start ? req.end : null;
     this.seekPending = this.start > 0;
@@ -260,6 +272,7 @@ export class AudioManager {
       return;
     }
     this.seekPending = false;
+    this.scheduleFade(t);
     if (this.end != null && t >= this.end - 0.02) {
       this.finish();
       return;
@@ -303,6 +316,15 @@ export class AudioManager {
         if (this.state.status !== 'idle') this.fail(this.state.status === 'loading' ? 'unsupported' : 'failed');
         break;
     }
+  }
+
+  /** Once playback has really reached the clip, tell the engine when to start fading (relative to the actual position). */
+  private scheduleFade(t: number) {
+    if (this.fadeScheduled || this.fadeLength <= 0 || this.end == null) return;
+    this.fadeScheduled = true;
+    const remaining = Math.max(0, this.end - t);
+    const duration = Math.min(this.fadeLength, remaining);
+    this.opts.overlay?.fadeOut(remaining - duration, duration);
   }
 
   private startPendingOverlay(elapsed: number) {
