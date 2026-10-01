@@ -81,6 +81,8 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
   Events, so it works with touch on iPhone and with a mouse; the list auto-scrolls near the edges, and the handle also responds
   to ↑ / ↓ on a keyboard.
 
+* **Soft Stop:** pressing Stop (or moving to another batter) eases the sound out over ~0.25 s so there's no click. The screen
+  goes idle instantly, and starting another song during that moment replaces the old one at once.
 * **Whole-song fade:** if a clip plays through to the very end of the song (or the end time is past the song's end),
   it still fades out over the last seconds. Teams saved by older versions are upgraded on load so they get the fade too.
 
@@ -160,7 +162,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 99 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 104 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

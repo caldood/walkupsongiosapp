@@ -17,6 +17,11 @@ class FakeEngine implements OverlayEngine {
   fadeOut(startIn: number, duration: number) {
     this.calls.push(`fade:${startIn.toFixed(1)}+${duration.toFixed(1)}`);
   }
+  fadeNow(duration: number) {
+    this.calls.push(`fadeNow:${duration}`);
+    return this.nowOk;
+  }
+  nowOk = true;
   pause() {
     this.calls.push('pause');
   }
@@ -193,5 +198,75 @@ describe('AudioManager fade-out when the whole song plays', () => {
     backend.currentTime = 10.5;
     vi.advanceTimersByTime(100);
     expect(engine.calls.filter((c) => c.startsWith('fade'))).toEqual(['fade:7.5+2.0']); // 9.5s left, fade the last 2
+  });
+});
+
+describe('AudioManager soft stop (no click when pressing Stop)', () => {
+  const mk = (withEngine = true) => {
+    const b = new FakeBackend();
+    const e = new FakeEngine();
+    const a = new AudioManager(b, { overlay: withEngine ? e : undefined, stopFadeMs: 250 });
+    return { b, e, a };
+  };
+
+  it('goes idle at once but lets the sound ease out before cutting it', async () => {
+    const { b, e, a } = mk();
+    a.play(req());
+    await settle();
+    const ended: string[] = [];
+    a.onEnded((x) => ended.push(x.reason));
+    a.stop();
+    expect(a.getState().status).toBe('idle'); // the UI never waits
+    expect(ended).toEqual(['stopped']);
+    expect(e.calls).toContain('fadeNow:0.25');
+    expect(b.playing).toBe(true); // still sounding while it fades
+    vi.advanceTimersByTime(300);
+    expect(b.playing).toBe(false);
+    expect(e.calls.at(-1)).toBe('stop'); // announcer cleaned up and fade gain reset
+  });
+
+  it('starting another song during the fade replaces the old one immediately and is not cut off later', async () => {
+    const { b, a } = mk();
+    a.play(req({ key: 'a', url: 'blob:a' }));
+    await settle();
+    a.stop();
+    a.play(req({ key: 'b', url: 'blob:b', overlay: undefined }));
+    await settle();
+    expect(b.url).toBe('blob:b');
+    vi.advanceTimersByTime(400); // the old fade's timer fires, but must leave the new track alone
+    expect(b.playing).toBe(true);
+    expect(a.getState()).toMatchObject({ status: 'playing', track: { key: 'b' } });
+  });
+
+  it('falls back to ramping the element volume when nothing is routed through the mixer', async () => {
+    const { b, e, a } = mk();
+    e.nowOk = false;
+    a.play(req({ overlay: undefined }));
+    await settle();
+    b.volumes.length = 0;
+    a.stop();
+    vi.advanceTimersByTime(300);
+    expect(b.volumes.some((v) => v > 0 && v < 1)).toBe(true);
+    expect(b.volumes.at(-1)).toBe(1); // volume restored for the next track
+    expect(b.playing).toBe(false);
+  });
+
+  it('stops immediately when paused or not playing (nothing to fade)', async () => {
+    const { b, a } = mk();
+    a.play(req());
+    await settle();
+    a.pause();
+    a.stop();
+    expect(b.url).toBeNull();
+    a.stop(); // idle: harmless
+  });
+
+  it('is a hard stop when no fade is configured', async () => {
+    const hard = new FakeBackend();
+    const a = new AudioManager(hard);
+    a.play(req({ overlay: undefined }));
+    await settle();
+    a.stop();
+    expect(hard.playing).toBe(false);
   });
 });

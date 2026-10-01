@@ -225,6 +225,7 @@ describe('PlaybackController with an announcer', () => {
         canAttachLate: () => true,
         start: (o, e) => void calls.push(`start:${o.delay}@${e}`),
         fadeOut() {},
+        fadeNow: () => true,
         pause() {},
         resume() {},
         stop() {},

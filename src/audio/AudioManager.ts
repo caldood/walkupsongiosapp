@@ -80,6 +80,8 @@ export interface OverlayEngine {
    * clock, so it pauses and resumes with the music.
    */
   fadeOut(startIn: number, duration: number): void;
+  /** Ramp the sound to silence right now over `duration` seconds. Returns false if it can't (nothing routed through the mixer). */
+  fadeNow(duration: number): boolean;
   /** Whether an overlay can be added to a track that is already playing without cutting the music. */
   canAttachLate(): boolean;
   /** Start the overlay; `elapsed` = seconds of the clip already played. */
@@ -114,7 +116,7 @@ export class AudioManager {
 
   constructor(
     private backend: MediaBackend,
-    private opts: { tickMs?: number; overlay?: OverlayEngine } = {},
+    private opts: { tickMs?: number; overlay?: OverlayEngine; /** Soft-stop length in ms; 0 = hard stop. */ stopFadeMs?: number } = {},
   ) {
     backend.subscribe((e) => this.onBackend(e));
   }
@@ -236,18 +238,54 @@ export class AudioManager {
     else this.resume();
   }
 
+  /**
+   * Stops playback. The state goes idle immediately (the UI never waits), but the sound eases out over
+   * `stopFadeMs` so cutting a loud track doesn't click. Starting another track during that moment simply
+   * replaces the old one at once.
+   */
   stop(): void {
     const track = this.state.track;
     const active = this.state.status !== 'idle';
+    const wasPlaying = this.state.status === 'playing';
+    const fadeMs = this.opts.stopFadeMs ?? 0;
     this.token++;
     this.stopTimer();
-    this.backend.pause();
-    this.backend.clear();
-    this.opts.overlay?.stop();
     this.pendingOverlay = undefined;
     this.overlayStarted = false;
     this.set({ ...IDLE });
+    if (wasPlaying && fadeMs > 0) {
+      const token = this.token;
+      this.softHalt(fadeMs, token);
+    } else {
+      this.hardHalt();
+    }
     if (track && active) this.emitEnded({ track, reason: 'stopped' });
+  }
+
+  private hardHalt() {
+    this.backend.pause();
+    this.backend.clear();
+    this.opts.overlay?.stop();
+  }
+
+  private softHalt(fadeMs: number, token: number) {
+    const viaMixer = this.opts.overlay?.fadeNow(fadeMs / 1000) ?? false;
+    let ramp: ReturnType<typeof setInterval> | null = null;
+    if (!viaMixer) {
+      // No mixer routing: ramp the element volume instead (browsers that ignore it simply cut).
+      const steps = Math.max(2, Math.round(fadeMs / 25));
+      let i = 0;
+      ramp = setInterval(() => {
+        i++;
+        if (token === this.token) this.backend.setVolume(this.volume * Math.max(0, 1 - i / steps));
+      }, fadeMs / steps);
+    }
+    setTimeout(() => {
+      if (ramp) clearInterval(ramp);
+      if (token !== this.token) return; // something else started in the meantime and already took over
+      this.hardHalt();
+      this.backend.setVolume(this.volume);
+    }, fadeMs + 30);
   }
 
   /** Seek within the clip (0 = clip start). */

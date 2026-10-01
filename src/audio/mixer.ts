@@ -12,7 +12,7 @@ function audioContextCtor(): Ctor | null {
  *
  *   <audio> ──▶ MediaElementSource ──▶ musicGain ──▶ fadeGain ──┐
  *                                      (ducking)      (fade-out)    ├──▶ speakers
- *   announcer AudioBuffer ──▶ announcerGain ─────────────────────┘
+ *   announcer AudioBuffer ──▶ announcerGain ──▶ (fadeGain) ───────┘
  *
  * The music still streams from the single <audio> element (no big decode in memory); routing it through a
  * GainNode is what lets us duck it under the announcer even on iPhone, where `audio.volume` is ignored.
@@ -54,7 +54,7 @@ export class WebAudioMixer implements OverlayEngine {
       ctx.createMediaElementSource(this.element).connect(music);
       music.connect(fade);
       fade.connect(ctx.destination);
-      announcer.connect(ctx.destination);
+      announcer.connect(fade);
       this.musicGain = music;
       this.fadeGain = fade;
       this.announcerGain = announcer;
@@ -117,6 +117,18 @@ export class WebAudioMixer implements OverlayEngine {
     g.setValueAtTime(1, t0);
     // A short exponential-ish curve sounds smoother than a straight line: ramp to near-silence, then to 0.
     g.linearRampToValueAtTime(0.0001, t0 + Math.max(0.05, duration));
+  }
+
+  fadeNow(duration: number): boolean {
+    const ctx = this.ctx;
+    if (!ctx || !this.fadeGain || ctx.state !== 'running') return false;
+    const g = this.fadeGain.gain;
+    const now = ctx.currentTime;
+    const current = g.value;
+    g.cancelScheduledValues(now);
+    g.setValueAtTime(current, now);
+    g.linearRampToValueAtTime(0.0001, now + Math.max(0.02, duration));
+    return true;
   }
 
   pause(): void {

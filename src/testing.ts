@@ -36,7 +36,10 @@ export class FakeBackend implements MediaBackend {
   seek(s: number) {
     this.currentTime = s;
   }
-  setVolume() {}
+  volumes: number[] = [];
+  setVolume(v: number) {
+    this.volumes.push(v);
+  }
   subscribe(l: (e: BackendEvent) => void) {
     this.listeners.add(l);
     return () => this.listeners.delete(l);
