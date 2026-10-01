@@ -34,6 +34,10 @@ export class HtmlAudioBackend implements MediaBackend {
     this.ignorePauseUntil = performance.now() + ms;
   }
 
+  get element(): HTMLAudioElement {
+    return this.el;
+  }
+
   get currentTime() {
     return this.el.currentTime;
   }

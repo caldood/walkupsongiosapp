@@ -12,6 +12,7 @@ export function MusicLibrary() {
   const { songs, audioIds, teams } = useAppState();
   const { audio } = usePlayback();
   const input = useRef<HTMLInputElement>(null);
+  const announcerInput = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
@@ -19,18 +20,19 @@ export function MusicLibrary() {
   const [spUri, setSpUri] = useState('');
   const confirm = useConfirm();
 
-  async function addFiles(files: FileList | null) {
+  async function addFiles(files: FileList | null, role: 'music' | 'announcer' = 'music') {
     if (!files?.length) return;
     setBusy(true);
     setMessage(null);
     try {
-      const added = await store.addLocalSongs([...files]);
+      const added = await store.addLocalSongs([...files], role === 'announcer' ? { role } : {});
       setMessage(`Added ${added.length} song${added.length === 1 ? '' : 's'}.`);
     } catch {
       setMessage('Could not add one of those files. Check that it is an MP3, M4A or WAV and that there is free storage.');
     } finally {
       setBusy(false);
       if (input.current) input.current.value = '';
+      if (announcerInput.current) announcerInput.current.value = '';
     }
   }
 
@@ -44,6 +46,10 @@ export function MusicLibrary() {
         <input ref={input} type="file" accept={ACCEPTED_AUDIO} multiple hidden onChange={(e) => void addFiles(e.target.files)} />
         <button className="btn btn-primary wide big" disabled={busy} onClick={() => input.current?.click()}>
           {busy ? 'Adding…' : '＋ ADD MUSIC'}
+        </button>
+        <input ref={announcerInput} type="file" accept={ACCEPTED_AUDIO} multiple hidden onChange={(e) => void addFiles(e.target.files, 'announcer')} />
+        <button className="btn wide" disabled={busy} onClick={() => announcerInput.current?.click()}>
+          🎙 Add announcer recordings
         </button>
         {message && <Banner>{message}</Banner>}
       </Section>
@@ -62,7 +68,7 @@ export function MusicLibrary() {
               <li key={s.id} className="card">
                 <div className="row">
                   <button className="grow plain" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id}>
-                    <span className="row-title">{s.name}</span>
+                    <span className="row-title">{s.role === 'announcer' ? '🎙 ' : ''}{s.name}</span>
                     <span className="row-sub">
                       {local ? (has ? `On this device${s.duration ? ` · ${formatTime(s.duration)}` : ''}` : '⚠ Audio missing – choose the file again') : 'Spotify reference (not playable here)'}
                     </span>

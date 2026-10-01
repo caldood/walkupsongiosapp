@@ -25,6 +25,8 @@ export interface TrackRequest {
   start?: number;
   /** Seconds where playback stops; omitted = play to the end of the media. */
   end?: number | null;
+  /** Optional announcer-style sound mixed over the track. */
+  overlay?: Overlay;
 }
 
 export interface AudioState {
@@ -53,6 +55,33 @@ export interface MediaBackend {
   subscribe(listener: (e: BackendEvent) => void): () => void;
 }
 
+/**
+ * A second sound mixed over the track (e.g. the announcer saying the batter's name).
+ * `clip` is opaque to AudioManager – the OverlayEngine knows how to play it.
+ */
+export interface Overlay {
+  clip: unknown;
+  /** Length of the overlay in seconds. */
+  duration: number;
+  /** Seconds after the track's clip start when the overlay begins. */
+  delay: number;
+  /** Music level (0–1) while the overlay is speaking. */
+  duck: number;
+}
+
+/** Plays overlays alongside the media element (Web Audio in the browser; a fake in tests). */
+export interface OverlayEngine {
+  /** Called synchronously from the tap that starts/resumes playback. `needed` = this track has an overlay. */
+  prepare(needed: boolean): void;
+  /** Whether an overlay can be added to a track that is already playing without cutting the music. */
+  canAttachLate(): boolean;
+  /** Start the overlay; `elapsed` = seconds of the clip already played. */
+  start(overlay: Overlay, elapsed: number): void;
+  pause(): void;
+  resume(): void;
+  stop(): void;
+}
+
 export type EndReason = 'finished' | 'stopped';
 export interface EndedInfo {
   track: NonNullable<AudioState['track']>;
@@ -71,10 +100,12 @@ export class AudioManager {
   private timer: ReturnType<typeof setInterval> | null = null;
   private seekPending = false;
   private volume = 1;
+  private pendingOverlay: Overlay | undefined;
+  private overlayStarted = false;
 
   constructor(
     private backend: MediaBackend,
-    private opts: { tickMs?: number } = {},
+    private opts: { tickMs?: number; overlay?: OverlayEngine } = {},
   ) {
     backend.subscribe((e) => this.onBackend(e));
   }
@@ -107,7 +138,12 @@ export class AudioManager {
     const token = ++this.token;
     this.stopTimer();
     this.backend.pause();
+    this.opts.overlay?.stop();
+    this.opts.overlay?.prepare(!!req.overlay);
+    this.pendingOverlay = req.overlay;
+    this.overlayStarted = false;
     const { url, ...track } = req;
+    delete (track as { overlay?: Overlay }).overlay;
     this.start = Math.max(0, req.start ?? 0);
     this.end = req.end != null && req.end > this.start ? req.end : null;
     this.seekPending = this.start > 0;
@@ -133,6 +169,7 @@ export class AudioManager {
         if (token !== this.token) return;
         this.set({ status: 'playing', error: null });
         this.startTimer();
+        this.startPendingOverlay(0);
       })
       .catch((err: unknown) => {
         if (token !== this.token) return;
@@ -140,10 +177,23 @@ export class AudioManager {
       });
   }
 
+  /**
+   * Adds an overlay to the track that is playing now (used when the overlay's audio finished
+   * loading just after the tap). Ignored if that track is gone or the engine can't add it safely.
+   */
+  attachOverlay(trackKey: string, overlay: Overlay): void {
+    if (this.state.status !== 'playing' || this.state.track?.key !== trackKey) return;
+    if (!this.opts.overlay?.canAttachLate()) return;
+    this.pendingOverlay = overlay;
+    this.overlayStarted = false;
+    this.startPendingOverlay(this.state.position);
+  }
+
   pause(): void {
     if (this.state.status !== 'playing' && this.state.status !== 'loading') return;
     this.stopTimer();
     this.backend.pause();
+    this.opts.overlay?.pause();
     this.set({ status: 'paused' });
   }
 
@@ -153,12 +203,14 @@ export class AudioManager {
     if (!track || (status !== 'paused' && !(status === 'error' && this.state.error === 'needs-gesture'))) return;
     const token = ++this.token;
     this.set({ status: 'loading', error: null });
+    this.opts.overlay?.resume();
     this.backend
       .play()
       .then(() => {
         if (token !== this.token) return;
         this.set({ status: 'playing', error: null });
         this.startTimer();
+        this.startPendingOverlay(this.state.position); // no-op unless the overlay never got to start
       })
       .catch((err: unknown) => {
         if (token !== this.token) return;
@@ -178,6 +230,9 @@ export class AudioManager {
     this.stopTimer();
     this.backend.pause();
     this.backend.clear();
+    this.opts.overlay?.stop();
+    this.pendingOverlay = undefined;
+    this.overlayStarted = false;
     this.set({ ...IDLE });
     if (track && active) this.emitEnded({ track, reason: 'stopped' });
   }
@@ -240,6 +295,7 @@ export class AudioManager {
         // Phone call, Siri, headphones unplugged, another app took the audio session…
         if (this.state.status === 'playing') {
           this.stopTimer();
+          this.opts.overlay?.pause();
           this.set({ status: 'paused' });
         }
         break;
@@ -249,18 +305,28 @@ export class AudioManager {
     }
   }
 
+  private startPendingOverlay(elapsed: number) {
+    if (!this.pendingOverlay || this.overlayStarted) return;
+    this.overlayStarted = true;
+    this.opts.overlay?.start(this.pendingOverlay, elapsed);
+  }
+
   private finish() {
     const track = this.state.track;
     this.token++;
     this.stopTimer();
     this.backend.pause();
     this.backend.clear();
+    this.opts.overlay?.stop();
+    this.pendingOverlay = undefined;
+    this.overlayStarted = false;
     this.set({ ...IDLE });
     if (track) this.emitEnded({ track, reason: 'finished' });
   }
 
   private fail(code: AudioErrorCode) {
     this.stopTimer();
+    this.opts.overlay?.stop();
     if (code !== 'needs-gesture') this.backend.pause();
     this.set({ status: 'error', error: code });
   }

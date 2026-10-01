@@ -2,10 +2,9 @@ import { useState } from 'react';
 import { benchPlayers, lineup } from '../core/battingOrder';
 import { isPlayable } from '../core/songs';
 import { playback, store } from '../state/app';
-import { switchMode, preloadBatters } from '../state/gameActions';
+import { switchMode, preloadBatters, walkUpRequest } from '../state/gameActions';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
-import { resolveClip } from '../core/clip';
 import { Screen, Section } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
 import { SongPicker } from '../components/SongPicker';
@@ -104,8 +103,8 @@ export function GameSetup() {
                     <button
                       className="btn btn-small"
                       onClick={() => {
-                        const c = resolveClip(p, song, team.settings.defaultClipSeconds);
-                        playback.playWalkUp({ playerId: 'preview', songId: song.id, title: song.name, subtitle: p.name, start: c.start, end: c.end });
+                        const req = walkUpRequest(team, p, { preview: true });
+                        if (typeof req !== 'string') playback.playWalkUp(req);
                       }}
                     >
                       ▶ Test

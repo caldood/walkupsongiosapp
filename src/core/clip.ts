@@ -35,3 +35,15 @@ export function resolveClip(
 export function describeClip(clip: Clip, fmt: (s: number) => string): string {
   return `${fmt(clip.start)}–${fmt(clip.end)}`;
 }
+
+/**
+ * Makes sure the clip lasts long enough for the announcer to finish (plus a short tail), so the
+ * announcement is never cut off by the clip end. Returns the clip unchanged when it already fits
+ * or the announcement length is unknown.
+ */
+export function fitAnnouncer(clip: Clip, delay: number, announcerSeconds: number | undefined, tail = 0.75): Clip {
+  if (!announcerSeconds || announcerSeconds <= 0) return clip;
+  const needed = Math.max(0, delay) + announcerSeconds + tail;
+  if (clip.duration >= needed) return clip;
+  return { start: clip.start, end: clip.start + needed, duration: needed };
+}

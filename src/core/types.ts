@@ -22,6 +22,8 @@ export interface Song {
   mimeType?: string;
   /** Full-length duration in seconds, when known. */
   duration?: number;
+  /** 'announcer' clips (spoken names) are kept apart from music in pickers and playlists. Missing = music. */
+  role?: 'music' | 'announcer';
   /** spotify: reference only — we never download or play Spotify audio. */
   spotifyUri?: string;
 }
@@ -33,6 +35,10 @@ export interface Player {
   /** Small data-URL avatar. */
   photo?: string;
   walkUpSongId?: ID | null;
+  /** Optional spoken announcement (a library song with role 'announcer') mixed over the walk-up music. */
+  announcerSongId?: ID | null;
+  /** Seconds after the clip starts when the announcement begins. */
+  announcerDelay?: number;
   /** Seconds into the song where the walk-up starts. */
   clipStart: number;
   /** Seconds where it ends. null/undefined = clipStart + the team's default duration. */
@@ -53,6 +59,8 @@ export interface TeamSettings {
   autoPlayNext: boolean;
   defenseShuffle: boolean;
   defenseRepeat: boolean;
+  /** Music level (0–1) while the announcer speaks. 1 = no ducking. */
+  announcerDuck: number;
 }
 
 export interface Team {
@@ -93,7 +101,10 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   autoPlayNext: false,
   defenseShuffle: false,
   defenseRepeat: true,
+  announcerDuck: 0.35,
 };
+
+export const DEFAULT_ANNOUNCER_DELAY = 2;
 
 export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: true, activeTeamId: null };
 

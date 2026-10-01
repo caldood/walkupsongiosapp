@@ -64,6 +64,8 @@ export function parseTeamExport(text: string): TeamExport {
       number: str(p.number),
       photo: typeof p.photo === 'string' ? p.photo : undefined,
       walkUpSongId: typeof p.walkUpSongId === 'string' ? p.walkUpSongId : null,
+      announcerSongId: typeof p.announcerSongId === 'string' ? p.announcerSongId : null,
+      announcerDelay: typeof p.announcerDelay === 'number' && Number.isFinite(p.announcerDelay) ? Math.max(0, p.announcerDelay) : undefined,
       clipStart: Math.max(0, num(p.clipStart)),
       clipEnd: typeof p.clipEnd === 'number' && Number.isFinite(p.clipEnd) ? p.clipEnd : null,
     })),
@@ -80,12 +82,14 @@ export function parseTeamExport(text: string): TeamExport {
       autoPlayNext: bool(s.autoPlayNext, DEFAULT_TEAM_SETTINGS.autoPlayNext),
       defenseShuffle: bool(s.defenseShuffle, DEFAULT_TEAM_SETTINGS.defenseShuffle),
       defenseRepeat: bool(s.defenseRepeat, DEFAULT_TEAM_SETTINGS.defenseRepeat),
+      announcerDuck: Math.min(1, Math.max(0, num(s.announcerDuck, DEFAULT_TEAM_SETTINGS.announcerDuck))),
     },
   };
   const songs: Song[] = (Array.isArray(raw.songs) ? raw.songs : []).filter(isObj).map((x) => ({
     id: str(x.id),
     name: str(x.name, 'Song'),
     artist: typeof x.artist === 'string' ? x.artist : undefined,
+    role: x.role === 'announcer' ? 'announcer' : undefined,
     filename: str(x.filename),
     sourceType: x.sourceType === 'spotify' ? 'spotify' : 'local',
     size: typeof x.size === 'number' ? x.size : undefined,
@@ -139,7 +143,7 @@ export function prepareImport(
   const players: Player[] = data.team.players.map((p) => {
     const nid = id();
     playerIds.set(p.id, nid);
-    return { ...p, id: nid, walkUpSongId: remap(p.walkUpSongId) };
+    return { ...p, id: nid, walkUpSongId: remap(p.walkUpSongId), announcerSongId: remap(p.announcerSongId) };
   });
   const playlistIds = new Map<string, string>();
   const defensePlaylists = data.team.defensePlaylists.map((pl) => {

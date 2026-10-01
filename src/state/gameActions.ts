@@ -1,22 +1,43 @@
 import { currentBatter, lineup } from '../core/battingOrder';
-import { resolveClip } from '../core/clip';
-import type { GameMode, Player, Team } from '../core/types';
+import { fitAnnouncer, resolveClip } from '../core/clip';
+import { DEFAULT_ANNOUNCER_DELAY, type GameMode, type Player, type Team } from '../core/types';
 import { audioManager, playback, store } from './app';
+import type { WalkUpRequest } from './playback';
 
-/** Plays a player's walk-up clip. Returns why nothing started, if so. */
-export function playWalkUpFor(team: Team, player: Player): 'started' | 'no-song' | 'spotify' {
+/**
+ * Builds the playback request for a player's walk-up: the music clip plus (if set) the announcer.
+ * Takes a player-shaped object so the editor can test unsaved changes.
+ */
+export function walkUpRequest(
+  team: Team,
+  player: Pick<Player, 'id' | 'name' | 'clipStart' | 'clipEnd' | 'walkUpSongId' | 'announcerSongId' | 'announcerDelay'>,
+  opts: { preview?: boolean } = {},
+): WalkUpRequest | 'no-song' | 'spotify' {
   const song = store.song(player.walkUpSongId);
   if (!song) return 'no-song';
   if (song.sourceType !== 'local') return 'spotify';
-  const clip = resolveClip(player, song, team.settings.defaultClipSeconds);
-  playback.playWalkUp({
-    playerId: player.id,
+  let clip = resolveClip(player, song, team.settings.defaultClipSeconds);
+  const announcer = store.song(player.announcerSongId);
+  const hasAnnouncer = !!announcer && announcer.sourceType === 'local';
+  const delay = player.announcerDelay ?? DEFAULT_ANNOUNCER_DELAY;
+  // Never cut the announcement off: stretch the clip if the announcer would outlast it.
+  if (hasAnnouncer) clip = fitAnnouncer(clip, delay, announcer.duration);
+  return {
+    playerId: opts.preview ? 'preview' : player.id,
     songId: song.id,
     title: song.name,
     subtitle: player.name,
     start: clip.start,
     end: clip.end,
-  });
+    announcer: hasAnnouncer ? { songId: announcer.id, delay, duck: team.settings.announcerDuck } : undefined,
+  };
+}
+
+/** Plays a player's walk-up clip. Returns why nothing started, if so. */
+export function playWalkUpFor(team: Team, player: Player, opts: { preview?: boolean } = {}): 'started' | 'no-song' | 'spotify' {
+  const req = walkUpRequest(team, player, opts);
+  if (typeof req === 'string') return req;
+  playback.playWalkUp(req);
   return 'started';
 }
 
@@ -40,6 +61,7 @@ export function preloadBatters() {
   const rotated = order.slice(i).concat(order.slice(0, i));
   const playlist = team.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId);
   playback.preload([...rotated.map((b) => b.walkUpSongId), ...(playlist?.songIds.slice(0, 3) ?? [])]);
+  playback.preloadAnnouncers(rotated.map((b) => b.announcerSongId));
 }
 
 export function nextBatter() {

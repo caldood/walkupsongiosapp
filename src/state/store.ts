@@ -220,7 +220,7 @@ export class AppStore {
   }
 
   /** Imports audio files into the library (copying them into IndexedDB). Existing identical files are reused. */
-  async addLocalSongs(files: File[]): Promise<Song[]> {
+  async addLocalSongs(files: File[], extra: Partial<Song> = {}): Promise<Song[]> {
     const out: Song[] = [];
     for (const file of files) {
       const dupe = this.state.songs.find((s) => s.sourceType === 'local' && s.filename === file.name && s.size === file.size);
@@ -230,7 +230,7 @@ export class AppStore {
         continue;
       }
       const duration = await (this.opts.readDuration ?? readDuration)(file);
-      const song = createLocalSong({ name: file.name, size: file.size, type: mimeFor(file) }, { duration }, this.id);
+      const song = createLocalSong({ name: file.name, size: file.size, type: mimeFor(file) }, { duration, ...extra }, this.id);
       await this.storeAudio(song, file);
       this.set({ songs: [...this.state.songs, song] });
       this.persist(this.repo.saveSong(song));

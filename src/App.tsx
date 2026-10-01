@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { bindMediaSession, updateMediaSession } from './audio/platform';
-import { audioManager, backend, playback, store } from './state/app';
+import { audioManager, backend, mixer, playback, store } from './state/app';
 import { installAutoAdvance, preloadBatters } from './state/gameActions';
 import { useAppState } from './state/hooks';
 import { NavProvider, useNav } from './Nav';
@@ -53,7 +53,11 @@ export function App() {
     bindMediaSession({ play: () => playback.resume(), pause: () => playback.pause() });
     // iOS: the audio element must be "unlocked" by a real tap before scripts can start it later
     // (auto-advance, auto-play next, playlist progression).
-    const unlock = () => backend.unlock();
+    const unlock = () => {
+      backend.unlock();
+      // Build the announcer mixing graph inside this tap if any player has an announcer.
+      if (store.activeTeam?.players.some((p) => p.announcerSongId)) mixer.prepare(true);
+    };
     window.addEventListener('pointerdown', unlock, { once: true, capture: true });
     return () => {
       offAuto();

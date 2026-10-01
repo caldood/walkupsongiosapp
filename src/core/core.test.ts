@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { addToOrder, benchPlayers, clampIndex, currentBatter, lineup, moveInOrder, nextIndex, prevIndex, reconcileOrder, upNext } from './battingOrder';
-import { describeClip, resolveClip } from './clip';
+import { describeClip, fitAnnouncer, resolveClip } from './clip';
 import { formatTime, parseTime } from './format';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from './game';
 import { buildQueue, currentSongId, nextInQueue, prevInQueue, upcoming } from './playlistQueue';
-import { findMissingSongs, isPlayable, matchFilesToSongs, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
+import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
 import { addPlayer, assignWalkUp, createPlayer, createPlaylist, createTeam, detachSong, duplicateTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
 import type { GameState, Team } from './types';
@@ -326,5 +326,39 @@ describe('import / export', () => {
     expect(parsed.team.settings.defaultClipSeconds).toBe(15);
     expect(parsed.team.players[0]).toMatchObject({ clipStart: 0, clipEnd: null, number: '' });
     expect(prepareImport(parsed, [], new Set(), seqId()).team.battingOrder).toEqual([]);
+  });
+});
+
+describe('announcer', () => {
+  it('stretches a clip so the announcement is never cut off', () => {
+    const clip = { start: 40, end: 50, duration: 10 };
+    expect(fitAnnouncer(clip, 2, 3)).toBe(clip); // 2 + 3 + 0.75 fits in 10s
+    expect(fitAnnouncer(clip, 8, 4)).toEqual({ start: 40, end: 52.75, duration: 12.75 });
+    expect(fitAnnouncer(clip, 2, undefined)).toBe(clip);
+  });
+
+  it('counts announcer recordings as songs the team depends on, and clears them when deleted', () => {
+    let t = sampleTeam();
+    t = { ...t, players: t.players.map((p, i) => (i === 0 ? { ...p, announcerSongId: 'a1', announcerDelay: 3 } : p)) };
+    expect(songIdsUsedBy(t)).toContain('a1');
+    expect(detachSong(t, 'a1').players[0].announcerSongId).toBeNull();
+    const announcer = createLocalSong({ name: 'Jack.wav', size: 5, type: 'audio/wav' }, { role: 'announcer' });
+    expect(findMissingSongs({ ...t, players: [{ ...t.players[0], announcerSongId: announcer.id }] }, [announcer], new Set()).map((s) => s.id)).toEqual([announcer.id]);
+  });
+
+  it('survives export / import with the announcer, delay, role and ducking level', () => {
+    const id = seqId();
+    const music = createLocalSong({ name: 'Song.mp3', size: 10, type: 'audio/mpeg' }, {}, id);
+    const voice = createLocalSong({ name: 'Brevan.wav', size: 3, type: 'audio/wav' }, { role: 'announcer', duration: 3.2 }, id);
+    let t = createTeam('T', id);
+    t = addPlayer(t, createPlayer({ name: 'Brevan', walkUpSongId: music.id, announcerSongId: voice.id, announcerDelay: 2.5 }, id));
+    t = { ...t, settings: { ...t.settings, announcerDuck: 0.2 } };
+    const r = prepareImport(parseTeamExport(serializeTeam(t, [music, voice])), [], new Set(), seqId());
+    const p = r.team.players[0];
+    const voiceImported = r.newSongs.find((s) => s.id === p.announcerSongId)!;
+    expect(voiceImported).toMatchObject({ role: 'announcer', filename: 'Brevan.wav' });
+    expect(p.announcerDelay).toBe(2.5);
+    expect(r.team.settings.announcerDuck).toBe(0.2);
+    expect(r.missingSongIds).toHaveLength(2);
   });
 });

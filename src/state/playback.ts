@@ -1,5 +1,6 @@
 import { AudioManager, type AudioState, type EndedInfo } from '../audio/AudioManager';
 import type { AudioResolver } from '../storage/audioLibrary';
+import type { AnnouncerResolver } from '../storage/announcerLibrary';
 import {
   buildQueue,
   currentSongId,
@@ -36,6 +37,8 @@ export interface WalkUpRequest {
   subtitle?: string;
   start: number;
   end: number;
+  /** Spoken name mixed over the music. */
+  announcer?: { songId: string; delay: number; duck: number };
 }
 
 const EMPTY_DEFENSE: DefenseView = {
@@ -61,13 +64,15 @@ export class PlaybackController {
   private listeners = new Set<() => void>();
   private walkUpFinished = new Set<(playerId: string, songId: string) => void>();
   private rng?: Rng;
+  private announcers?: AnnouncerResolver;
 
   constructor(
     private audio: AudioManager,
     private resolver: AudioResolver,
     private getSong: (id: string) => Song | undefined,
-    opts: { rng?: Rng } = {},
+    opts: { rng?: Rng; announcers?: AnnouncerResolver } = {},
   ) {
+    this.announcers = opts.announcers;
     this.rng = opts.rng;
     this.snapshot = { audio: audio.getState(), defense: this.defense };
     audio.subscribe((a) => this.publish({ audio: a }));
@@ -102,13 +107,27 @@ export class PlaybackController {
     this.defenseToken++;
     this.rememberDefensePosition();
     const base = { key: req.songId, ref: req.playerId, kind: 'walkup' as const, title: req.title, subtitle: req.subtitle, start: req.start, end: req.end };
+    const ann = req.announcer;
+    const overlayFor = (d: { clip: unknown; duration: number }) => ({ clip: d.clip, duration: d.duration, delay: ann!.delay, duck: ann!.duck });
+    const decoded = ann ? this.announcers?.peek(ann.songId) : null;
     const cached = this.resolver.peek(req.songId);
     if (cached) {
-      this.audio.play({ ...base, url: cached });
+      this.audio.play({ ...base, url: cached, overlay: decoded ? overlayFor(decoded) : undefined });
+      // The announcer wasn't decoded yet: add it as soon as it is (if it's still in time).
+      if (ann && !decoded) {
+        void this.announcers?.get(ann.songId).then((d) => d && this.audio.attachOverlay(req.songId, overlayFor(d)));
+      }
       return;
     }
     // Not cached yet: show "loading", then try (iOS may need a second tap).
-    void this.resolver.get(req.songId).then((url) => this.audio.play({ ...base, url }));
+    void Promise.all([this.resolver.get(req.songId), ann ? this.announcers?.get(ann.songId) : null]).then(([url, d]) =>
+      this.audio.play({ ...base, url, overlay: d ? overlayFor(d) : undefined }),
+    );
+  }
+
+  /** Decode announcer clips ahead of time so they can be mixed in the instant the music starts. */
+  preloadAnnouncers(songIds: (string | undefined | null)[]) {
+    for (const id of songIds) if (id) void this.announcers?.get(id).catch(() => null);
   }
 
   /** Plays a whole song from the start (library preview). Never triggers walk-up auto-advance. */

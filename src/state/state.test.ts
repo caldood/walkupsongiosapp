@@ -268,3 +268,45 @@ describe('PlaybackController (defense playlist)', () => {
     expect(pc.getSnapshot().defense.currentSongId).toBe('b');
   });
 });
+
+describe('PlaybackController with an announcer', () => {
+  it('passes the decoded announcer to the audio manager and attaches it late if it was not decoded yet', async () => {
+    vi.useFakeTimers();
+    const backend = new FakeBackend();
+    const calls: string[] = [];
+    const audio = new AudioManager(backend, {
+      overlay: {
+        prepare: (n) => void calls.push(`prepare:${n}`),
+        canAttachLate: () => true,
+        start: (o, e) => void calls.push(`start:${o.delay}@${e}`),
+        pause() {},
+        resume() {},
+        stop() {},
+      },
+    });
+    const decoded = new Map<string, { clip: unknown; duration: number }>();
+    const announcers = {
+      peek: (id: string) => decoded.get(id) ?? null,
+      get: async (id: string) => {
+        const d = { clip: {}, duration: 3 };
+        decoded.set(id, d);
+        return d;
+      },
+    };
+    const resolver = { peek: () => 'blob:m', get: async () => 'blob:m' };
+    const pc = new PlaybackController(audio, resolver, () => undefined, { announcers });
+    const req = { playerId: 'p', songId: 'm', title: 'M', start: 0, end: 20, announcer: { songId: 'v', delay: 2, duck: 0.3 } };
+
+    pc.playWalkUp(req); // announcer not decoded yet → music starts at once, announcer joins when ready
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toContain('prepare:false');
+    expect(calls.filter((c) => c.startsWith('start'))).toEqual(['start:2@0']);
+
+    calls.length = 0;
+    pc.playWalkUp(req); // now cached → included in the very first start
+    await vi.advanceTimersByTimeAsync(0);
+    expect(calls).toContain('prepare:true');
+    expect(calls.filter((c) => c.startsWith('start'))).toEqual(['start:2@0']);
+    vi.useRealTimers();
+  });
+});

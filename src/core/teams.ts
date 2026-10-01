@@ -52,7 +52,11 @@ export function assignWalkUp(team: Team, playerId: string, songId: string | null
 export function detachSong(team: Team, songId: string): Team {
   return {
     ...team,
-    players: team.players.map((p) => (p.walkUpSongId === songId ? { ...p, walkUpSongId: null } : p)),
+    players: team.players.map((p) => ({
+      ...p,
+      walkUpSongId: p.walkUpSongId === songId ? null : p.walkUpSongId,
+      announcerSongId: p.announcerSongId === songId ? null : p.announcerSongId,
+    })),
     defensePlaylists: team.defensePlaylists.map((pl) => ({ ...pl, songIds: pl.songIds.filter((s) => s !== songId) })),
   };
 }

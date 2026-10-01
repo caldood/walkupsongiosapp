@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react';
-import { resolveClip } from '../core/clip';
+import { fitAnnouncer, resolveClip } from '../core/clip';
 import { formatTime, parseTime } from '../core/format';
 import { spotifyOpenUrl } from '../core/songs';
 import { createPlayer } from '../core/teams';
 import { playback, store } from '../state/app';
+import { walkUpRequest } from '../state/gameActions';
+import { DEFAULT_ANNOUNCER_DELAY } from '../core/types';
 import { useActiveTeam, usePlayback, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Banner, Screen, Section, useConfirm } from '../components/ui';
@@ -26,6 +28,9 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
   const [start, setStart] = useState(existing && existing.clipStart ? formatTime(existing.clipStart) : '');
   const [end, setEnd] = useState(existing?.clipEnd ? formatTime(existing.clipEnd) : '');
   const [picking, setPicking] = useState(false);
+  const [announcerId, setAnnouncerId] = useState(existing?.announcerSongId ?? null);
+  const [delay, setDelay] = useState(existing?.announcerDelay != null ? String(existing.announcerDelay) : '');
+  const [pickingAnnouncer, setPickingAnnouncer] = useState(false);
 
   if (!team) return null;
   const song = songs.find((s) => s.id === songId);
@@ -37,11 +42,23 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
       : endSec != null && startSec != null && endSec <= startSec
         ? 'End must be after start.'
         : null;
+  const announcer = songs.find((s) => s.id === announcerId);
+  const delaySec = delay.trim() ? Number(delay) : DEFAULT_ANNOUNCER_DELAY;
+  const delayError = !Number.isFinite(delaySec) || delaySec < 0 ? 'Enter a number of seconds, like 2.' : null;
   const dirtyName = !name.trim();
 
   function save() {
-    if (dirtyName || timeError) return;
-    const fields = { name: name.trim(), number: number.trim(), photo, walkUpSongId: songId, clipStart: startSec ?? 0, clipEnd: endSec };
+    if (dirtyName || timeError || delayError) return;
+    const fields = {
+      name: name.trim(),
+      number: number.trim(),
+      photo,
+      walkUpSongId: songId,
+      clipStart: startSec ?? 0,
+      clipEnd: endSec,
+      announcerSongId: announcerId,
+      announcerDelay: delay.trim() ? delaySec : undefined,
+    };
     if (existing) store.savePlayer({ ...existing, ...fields });
     else store.savePlayer(fields);
     playback.stopAll();
@@ -49,14 +66,20 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
   }
 
   function test() {
-    if (!song || song.sourceType !== 'local' || timeError) return;
-    const clip = resolveClip({ clipStart: startSec ?? 0, clipEnd: endSec }, song, team!.settings.defaultClipSeconds);
-    playback.playWalkUp({ playerId: existing?.id ?? 'preview', songId: song.id, title: song.name, subtitle: name || 'Preview', start: clip.start, end: clip.end });
+    if (!song || song.sourceType !== 'local' || timeError || delayError) return;
+    const req = walkUpRequest(
+      team!,
+      { id: existing?.id ?? 'preview', name: name || 'Preview', clipStart: startSec ?? 0, clipEnd: endSec, walkUpSongId: songId, announcerSongId: announcerId, announcerDelay: delay.trim() ? delaySec : undefined },
+      { preview: true },
+    );
+    if (typeof req !== 'string') playback.playWalkUp(req);
   }
 
   const testing = audio.track?.key === songId && audio.track?.kind === 'walkup' && audio.status !== 'idle';
   const draft = createPlayer({ name, clipStart: startSec ?? 0, clipEnd: endSec });
-  const clip = song ? resolveClip(draft, song, team.settings.defaultClipSeconds) : null;
+  const baseClip = song ? resolveClip(draft, song, team.settings.defaultClipSeconds) : null;
+  const clip = baseClip && announcer ? fitAnnouncer(baseClip, delaySec, announcer.duration) : baseClip;
+  const stretched = !!baseClip && !!clip && clip.duration > baseClip.duration + 0.01;
   const spotify = song?.sourceType === 'spotify' ? spotifyOpenUrl(song) : null;
 
   return (
@@ -67,7 +90,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         nav.back();
       }}
       right={
-        <button className="btn-text strong" onClick={save} disabled={dirtyName || !!timeError}>
+        <button className="btn-text strong" onClick={save} disabled={dirtyName || !!timeError || !!delayError}>
           Save
         </button>
       }
@@ -126,6 +149,28 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         )}
       </Section>
 
+      <Section title="Announcer (optional)" hint="A recording of the name being spoken. It plays over the walk-up music and the music dips while it talks.">
+        <button className="row pick" onClick={() => setPickingAnnouncer(true)}>
+          <span className="grow">
+            <span className="row-title">🎙 {announcer ? announcer.name : 'Add announcer recording'}</span>
+            <span className="row-sub">
+              {announcer ? (audioIds.has(announcer.localReference ?? announcer.id) ? `On this device${announcer.duration ? ` · ${announcer.duration.toFixed(1)}s` : ''}` : 'Audio missing on this device') : 'e.g. “Now batting… number 7… Brevan Sun!”'}
+            </span>
+          </span>
+          <span aria-hidden="true">›</span>
+        </button>
+        {announcer && (
+          <>
+            <label className="label" htmlFor="adelay">Announcer starts (seconds after the music starts)</label>
+            <input id="adelay" className="field mono" value={delay} onChange={(e) => setDelay(e.target.value)} inputMode="decimal" placeholder={String(DEFAULT_ANNOUNCER_DELAY)} />
+            {delayError && <p className="error-text">{delayError}</p>}
+            {stretched && clip && <p className="hint">The announcement is longer than the clip, so the clip will run {Math.round(clip.duration)} seconds.</p>}
+            <button className="btn-text" onClick={() => setAnnouncerId(null)}>Remove announcer</button>
+          </>
+        )}
+        {announcer && !audioIds.has(announcer.localReference ?? announcer.id) && <Banner kind="warn">Announcer recording not available on this device. Open Songs to choose the audio file again.</Banner>}
+      </Section>
+
       {song?.sourceType === 'local' && (
         <Section title="Clip" hint={`Leave End blank to play ${team.settings.defaultClipSeconds} seconds from the start (change the default in Settings).`}>
           <div className="pair">
@@ -162,6 +207,19 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         </Section>
       )}
       {confirm.dialog}
+      {pickingAnnouncer && (
+        <SongPicker
+          title="Announcer recording"
+          role="announcer"
+          allowSpotify={false}
+          selectedIds={announcerId ? [announcerId] : []}
+          onClose={() => setPickingAnnouncer(false)}
+          onPick={(s) => {
+            setAnnouncerId(s.id);
+            setPickingAnnouncer(false);
+          }}
+        />
+      )}
       {picking && (
         <SongPicker
           title="Walk-up song"
