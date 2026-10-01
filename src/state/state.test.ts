@@ -93,16 +93,14 @@ describe('AppStore', () => {
     expect(store.getState().songs).toHaveLength(1);
   });
 
-  it('deleting a song clears it from players and playlists', async () => {
+  it('deleting a song clears it from players', async () => {
     const { store } = await makeStore();
     store.createTeam('T');
     const p = store.savePlayer({ name: 'A' })!;
     const [song] = await store.addLocalSongs([fakeFile('a.mp3')]);
     store.assignWalkUp(p.id, song.id);
-    store.savePlaylist({ name: 'W', songIds: [song.id] });
     await store.deleteSong(song.id);
     expect(store.activeTeam!.players[0].walkUpSongId).toBeNull();
-    expect(store.activeTeam!.defensePlaylists[0].songIds).toEqual([]);
     expect(store.getState().audioIds.has(song.id)).toBe(false);
   });
 
@@ -139,118 +137,60 @@ describe('AppStore', () => {
   });
 });
 
-describe('PlaybackController (defense playlist)', () => {
+describe('PlaybackController (walk-ups)', () => {
   let backend: FakeBackend;
   let audio: AudioManager;
   let pc: PlaybackController;
-  const available = new Set(['a', 'b', 'c']);
+  const available = new Set(['a', 'b']);
   const resolver: AudioResolver = {
     peek: (id) => (available.has(id) ? `blob:${id}` : null),
     get: async (id) => (available.has(id) ? `blob:${id}` : null),
   };
-  const songs = new Map(
-    ['a', 'b', 'c', 'x'].map((id) => [id, { id, name: id.toUpperCase(), filename: `${id}.mp3`, sourceType: 'local' as const }]),
-  );
 
   beforeEach(() => {
     vi.useFakeTimers();
-    available.clear();
-    ['a', 'b', 'c'].forEach((x) => available.add(x));
     backend = new FakeBackend();
     audio = new AudioManager(backend);
-    pc = new PlaybackController(audio, resolver, (id) => songs.get(id));
+    pc = new PlaybackController(audio, resolver);
   });
   afterEach(() => vi.useRealTimers());
 
   const settle = () => vi.advanceTimersByTimeAsync(0);
-  const nowPlaying = () => pc.getSnapshot().audio.track?.key;
 
-  it('auto-advances through the playlist and stops at the end without repeat', async () => {
-    pc.startDefense('pl', ['a', 'b', 'c'], { shuffle: false, repeat: false });
+  it('plays a clip, stops itself at the end and reports it finished', async () => {
+    const finished: string[] = [];
+    pc.onWalkUpFinished((p) => finished.push(p));
+    pc.playWalkUp({ playerId: 'p1', songId: 'a', title: 'A', start: 5, end: 10 });
     await settle();
-    expect(nowPlaying()).toBe('a');
-    backend.emit('ended');
-    await settle();
-    expect(nowPlaying()).toBe('b');
-    backend.emit('ended');
-    await settle();
-    backend.emit('ended');
-    await settle();
-    expect(pc.getSnapshot().audio.status).toBe('idle');
-    expect(pc.getSnapshot().defense.finished).toBe(true);
-  });
-
-  it('wraps around with repeat on', async () => {
-    pc.startDefense('pl', ['a', 'b'], { shuffle: false, repeat: true });
-    await settle();
-    backend.emit('ended');
-    await settle();
-    backend.emit('ended');
-    await settle();
-    expect(nowPlaying()).toBe('a');
-  });
-
-  it('supports next / previous / pause / resume / stop', async () => {
-    pc.startDefense('pl', ['a', 'b', 'c'], { shuffle: false, repeat: true });
-    await settle();
-    pc.defenseNext();
-    await settle();
-    expect(nowPlaying()).toBe('b');
-    pc.defensePrev();
-    await settle();
-    expect(nowPlaying()).toBe('a');
-    pc.defensePause();
-    expect(pc.getSnapshot().audio.status).toBe('paused');
-    pc.defensePlay();
-    await settle();
-    expect(pc.getSnapshot().audio.status).toBe('playing');
-    pc.stopAll();
-    expect(pc.getSnapshot().audio.status).toBe('idle');
-  });
-
-  it('skips songs whose audio is missing and counts them', async () => {
-    pc.startDefense('pl', ['x', 'a', 'x', 'b'], { shuffle: false, repeat: false });
-    await settle();
-    expect(nowPlaying()).toBe('a');
-    expect(pc.getSnapshot().defense.skipped).toBe(1);
-    backend.emit('ended');
-    await settle();
-    expect(nowPlaying()).toBe('b');
-  });
-
-  it('shows a friendly error when nothing in the playlist is playable', async () => {
-    pc.startDefense('pl', ['x'], { shuffle: false, repeat: true });
-    await settle();
-    expect(pc.getSnapshot().audio).toMatchObject({ status: 'error', error: 'missing' });
-  });
-
-  it('a walk-up interrupts defense, and defense resumes where it left off', async () => {
-    pc.startDefense('pl', ['a', 'b'], { shuffle: false, repeat: true });
-    await settle();
-    backend.currentTime = 30;
+    expect(pc.getSnapshot().audio).toMatchObject({ status: 'playing', track: { key: 'a', ref: 'p1' } });
+    backend.currentTime = 10;
     vi.advanceTimersByTime(100);
-    pc.playWalkUp({ playerId: 'p1', songId: 'c', title: 'C', start: 10, end: 20 });
-    await settle();
-    expect(pc.getSnapshot().audio.track).toMatchObject({ kind: 'walkup', key: 'c' });
-    pc.stopAll();
-    pc.defensePlay();
-    await settle();
-    expect(nowPlaying()).toBe('a');
-    expect(backend.currentTime).toBe(30);
+    expect(pc.getSnapshot().audio.status).toBe('idle');
+    expect(finished).toEqual(['p1']);
   });
 
-  it('notifies when a walk-up finishes by itself, but not when stopped', async () => {
+  it('tapping another player replaces the song (never two at once) and a stop is not "finished"', async () => {
     const finished: string[] = [];
     pc.onWalkUpFinished((p) => finished.push(p));
     pc.playWalkUp({ playerId: 'p1', songId: 'a', title: 'A', start: 0, end: 10 });
     await settle();
-    backend.currentTime = 10;
-    vi.advanceTimersByTime(100);
-    expect(finished).toEqual(['p1']);
-    pc.playWalkUp({ playerId: 'p2', songId: 'a', title: 'A', start: 0, end: 10 });
+    pc.playWalkUp({ playerId: 'p2', songId: 'b', title: 'B', start: 0, end: 10 });
     await settle();
+    expect(pc.getSnapshot().audio.track).toMatchObject({ key: 'b', ref: 'p2' });
+    expect(backend.url).toBe('blob:b');
     pc.stopAll();
-    expect(finished).toEqual(['p1']);
+    expect(pc.getSnapshot().audio.status).toBe('idle');
+    expect(finished).toEqual([]);
+  });
+
+  it('pauses and resumes', async () => {
+    pc.playWalkUp({ playerId: 'p1', songId: 'a', title: 'A', start: 0, end: 10 });
+    await settle();
+    pc.pause();
+    expect(pc.getSnapshot().audio.status).toBe('paused');
+    pc.resume();
+    await settle();
+    expect(pc.getSnapshot().audio.status).toBe('playing');
   });
 
   it('reports a missing walk-up song instead of failing silently', async () => {
@@ -259,13 +199,18 @@ describe('PlaybackController (defense playlist)', () => {
     expect(pc.getSnapshot().audio).toMatchObject({ status: 'error', error: 'missing' });
   });
 
-  it('turning shuffle on mid-playlist keeps the current song', async () => {
-    pc.startDefense('pl', ['a', 'b', 'c'], { shuffle: false, repeat: true });
+  it('starts synchronously from cached audio (needed for Safari taps)', () => {
+    pc.playWalkUp({ playerId: 'p1', songId: 'a', title: 'A', start: 0, end: 10 });
+    expect(backend.playCalls).toBe(1);
+  });
+
+  it('previews a whole song without triggering auto-advance', async () => {
+    const finished: string[] = [];
+    pc.onWalkUpFinished((p) => finished.push(p));
+    pc.previewSong({ id: 'a', name: 'A', filename: 'a.mp3', sourceType: 'local' });
     await settle();
-    pc.defenseNext();
-    await settle();
-    pc.setDefenseOptions({ shuffle: true });
-    expect(pc.getSnapshot().defense.currentSongId).toBe('b');
+    backend.emit('ended');
+    expect(finished).toEqual(['preview']); // ref 'preview' never matches the current batter
   });
 });
 

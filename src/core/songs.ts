@@ -38,14 +38,13 @@ export function spotifyOpenUrl(song: Pick<Song, 'spotifyUri'>): string | null {
   return web ? `https://open.spotify.com/${web[1]}/${web[2]}` : null;
 }
 
-/** Song ids a team depends on (walk-ups + defense playlists). */
+/** Song ids a team depends on (walk-up songs and announcer recordings). */
 export function songIdsUsedBy(team: Team): string[] {
   const ids = new Set<string>();
   for (const p of team.players) {
     if (p.walkUpSongId) ids.add(p.walkUpSongId);
     if (p.announcerSongId) ids.add(p.announcerSongId);
   }
-  for (const pl of team.defensePlaylists) pl.songIds.forEach((s) => ids.add(s));
   return [...ids];
 }
 

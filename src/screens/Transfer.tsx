@@ -56,7 +56,7 @@ export function Transfer() {
 
   return (
     <Screen title="Import / Export">
-      <Section title="Export team" hint="Saves the team's players, batting order, clip times, playlists, settings and song names. Audio files are NOT included — they stay on this phone.">
+      <Section title="Export team" hint="Saves the team's players, batting order, clip times, announcers, settings and song names. Audio files are NOT included — they stay on this phone.">
         <button className="btn btn-primary wide" disabled={!team} onClick={() => void doExport()}>
           Export “{team?.name ?? '—'}”
         </button>

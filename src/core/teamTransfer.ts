@@ -8,7 +8,7 @@ export const EXPORT_FORMAT = 'game-day-music/team';
 export const EXPORT_VERSION = 1;
 
 /**
- * Team configuration only. Audio files are deliberately NOT included (copyright, size, and the
+ * Team configuration only (older files may also contain defense playlists; those are ignored). Audio files are deliberately NOT included (copyright, size, and the
  * browser can't re-attach them anyway): songs travel as metadata and are re-linked by file name.
  */
 export interface TeamExport {
@@ -70,18 +70,10 @@ export function parseTeamExport(text: string): TeamExport {
       clipEnd: typeof p.clipEnd === 'number' && Number.isFinite(p.clipEnd) ? p.clipEnd : null,
     })),
     battingOrder: Array.isArray(t.battingOrder) ? t.battingOrder.filter((x): x is string => typeof x === 'string') : [],
-    defensePlaylists: (Array.isArray(t.defensePlaylists) ? t.defensePlaylists : []).filter(isObj).map((pl) => ({
-      id: str(pl.id),
-      name: str(pl.name, 'Playlist'),
-      songIds: Array.isArray(pl.songIds) ? pl.songIds.filter((x): x is string => typeof x === 'string') : [],
-    })),
-    activeDefensePlaylistId: typeof t.activeDefensePlaylistId === 'string' ? t.activeDefensePlaylistId : null,
     settings: {
       defaultClipSeconds: Math.max(1, num(s.defaultClipSeconds, DEFAULT_TEAM_SETTINGS.defaultClipSeconds)),
       autoAdvance: bool(s.autoAdvance, DEFAULT_TEAM_SETTINGS.autoAdvance),
       autoPlayNext: bool(s.autoPlayNext, DEFAULT_TEAM_SETTINGS.autoPlayNext),
-      defenseShuffle: bool(s.defenseShuffle, DEFAULT_TEAM_SETTINGS.defenseShuffle),
-      defenseRepeat: bool(s.defenseRepeat, DEFAULT_TEAM_SETTINGS.defenseRepeat),
       fadeOutSeconds: Math.min(10, Math.max(0, num(s.fadeOutSeconds, DEFAULT_TEAM_SETTINGS.fadeOutSeconds))),
       announcerDuck: Math.min(1, Math.max(0, num(s.announcerDuck, DEFAULT_TEAM_SETTINGS.announcerDuck))),
     },
@@ -146,19 +138,11 @@ export function prepareImport(
     playerIds.set(p.id, nid);
     return { ...p, id: nid, walkUpSongId: remap(p.walkUpSongId), announcerSongId: remap(p.announcerSongId) };
   });
-  const playlistIds = new Map<string, string>();
-  const defensePlaylists = data.team.defensePlaylists.map((pl) => {
-    const nid = id();
-    playlistIds.set(pl.id, nid);
-    return { ...pl, id: nid, songIds: pl.songIds.map((x) => remap(x)).filter((x): x is string => !!x) };
-  });
   const team = reconcileOrder({
     ...data.team,
     id: id(),
     players,
     battingOrder: data.team.battingOrder.map((p) => playerIds.get(p)).filter((p): p is string => !!p),
-    defensePlaylists,
-    activeDefensePlaylistId: data.team.activeDefensePlaylistId ? (playlistIds.get(data.team.activeDefensePlaylistId) ?? null) : null,
   });
 
   const missingSongIds = [...new Set([...songMap.values()])].filter((sid) => {

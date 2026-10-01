@@ -47,7 +47,6 @@ export function Settings() {
         <button className="btn wide" onClick={() => nav.go({ name: 'teams' })}>Teams</button>
         <button className="btn wide" onClick={() => nav.go({ name: 'players' })}>Players & batting order</button>
         <button className="btn wide" onClick={() => nav.go({ name: 'songs' })}>Songs</button>
-        <button className="btn wide" onClick={() => nav.go({ name: 'playlists' })}>Defense playlists</button>
         <button className="btn wide" onClick={() => nav.go({ name: 'transfer' })}>Import / export team</button>
       </Section>
 

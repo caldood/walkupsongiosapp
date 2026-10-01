@@ -1,5 +1,5 @@
 import { CLIP_DURATION_CHOICES } from '../core/types';
-import { playback, store } from '../state/app';
+import { store } from '../state/app';
 import { useActiveTeam } from '../state/hooks';
 import { Segmented, Toggle } from './ui';
 
@@ -48,8 +48,6 @@ export function TeamSettingsForm() {
       </div>
       <Toggle label="Auto advance" hint="When a walk-up finishes, move to the next batter (without playing)." checked={s.autoAdvance} onChange={(v) => store.updateTeamSettings({ autoAdvance: v, ...(v ? {} : { autoPlayNext: false }) })} />
       <Toggle label="Auto play next batter" hint="Also play the next batter's song right away. Off by default." checked={s.autoPlayNext} disabled={!s.autoAdvance} onChange={(v) => store.updateTeamSettings({ autoPlayNext: v })} />
-      <Toggle label="Shuffle defense playlist" checked={s.defenseShuffle} onChange={(v) => { store.updateTeamSettings({ defenseShuffle: v }); playback.setDefenseOptions({ shuffle: v }); }} />
-      <Toggle label="Repeat defense playlist" checked={s.defenseRepeat} onChange={(v) => { store.updateTeamSettings({ defenseRepeat: v }); playback.setDefenseOptions({ repeat: v }); }} />
     </>
   );
 }

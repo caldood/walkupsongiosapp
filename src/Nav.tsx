@@ -8,7 +8,6 @@ export type Screen =
   | { name: 'players' }
   | { name: 'player-edit'; playerId?: string }
   | { name: 'songs' }
-  | { name: 'playlists' }
   | { name: 'setup' }
   | { name: 'settings' }
   | { name: 'transfer' };

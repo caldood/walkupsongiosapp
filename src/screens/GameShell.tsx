@@ -1,15 +1,13 @@
 import { useEffect, useState } from 'react';
 import { setKeepAwake } from '../audio/platform';
-import { switchMode } from '../state/gameActions';
 import { store } from '../state/app';
 import { useActiveTeam, useAppState, usePlayback } from '../state/hooks';
 import { useNav } from '../Nav';
 import { AudioOutput } from '../components/AudioOutput';
 import { HoldButton } from '../components/ui';
-import { DefenseMode } from './DefenseMode';
 import { WalkUpMode } from './WalkUpMode';
 
-/** GAME MODE: one screen, one tap to swap between DEFENSE and WALK-UP. */
+/** GAME MODE: the batting order, big controls, and one tap on a name to play that player's walk-up. */
 export function GameShell() {
   const { game, settings } = useAppState();
   const team = useActiveTeam();
@@ -25,7 +23,7 @@ export function GameShell() {
   const playing = audio.status === 'playing';
 
   return (
-    <div className={`screen game mode-${game.mode} ${locked ? 'is-locked' : ''}`}>
+    <div className={`screen game ${locked ? 'is-locked' : ''}`}>
       <header className="scoreboard">
         <button className="btn-text" onClick={() => nav.back()} disabled={locked} aria-label="Home">
           ‹ HOME
@@ -53,24 +51,14 @@ export function GameShell() {
 
       {locked && (
         <div className="lockbar">
-          Controls locked — Play, Pause and Stop still work.
+          Locked — tapping names and Next Batter are off. Play, Pause and Stop still work.
           <HoldButton label="Hold to unlock" onHold={() => setLocked(false)} />
         </div>
       )}
 
-      <main className="content game-content">{game.mode === 'defense' ? <DefenseMode locked={locked} /> : <WalkUpMode locked={locked} />}</main>
-
-      <nav className="tabbar" aria-label="Game mode">
-        <button className={game.mode === 'defense' ? 'on' : ''} disabled={locked} onClick={() => switchMode('defense')} aria-pressed={game.mode === 'defense'}>
-          <span aria-hidden="true">🛡</span> DEFENSE
-        </button>
-        <button className={game.mode === 'walkup' ? 'on' : ''} disabled={locked} onClick={() => switchMode('walkup')} aria-pressed={game.mode === 'walkup'}>
-          <span aria-hidden="true">⚾</span> WALK-UP
-        </button>
-        <button disabled={locked} onClick={() => nav.go({ name: 'settings' })}>
-          <span aria-hidden="true">⚙</span> SETTINGS
-        </button>
-      </nav>
+      <main className="content game-content">
+        <WalkUpMode locked={locked} />
+      </main>
     </div>
   );
 }

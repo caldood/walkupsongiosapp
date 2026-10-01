@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { describeAudioError } from '../audio/AudioManager';
 import { ACCEPTED_AUDIO } from '../audio/metadata';
-import { currentBatter, lineup, upNext } from '../core/battingOrder';
+import { currentBatter, lineup } from '../core/battingOrder';
 import { describeClip, fitAnnouncer, resolveClip } from '../core/clip';
 import { DEFAULT_ANNOUNCER_DELAY } from '../core/types';
 import { formatTime } from '../core/format';
 import { isPlayable, spotifyOpenUrl } from '../core/songs';
 import { playback, store } from '../state/app';
-import { nextBatter, playCurrentWalkUp, preloadBatters, previousBatter } from '../state/gameActions';
+import { nextBatter, playCurrentWalkUp, playPlayer, preloadBatters, previousBatter } from '../state/gameActions';
 import { useActiveTeam, useAppState, usePlayback } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Banner, EmptyState } from '../components/ui';
@@ -48,12 +48,21 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
   const walkUpActive = audio.track?.kind === 'walkup';
   const error = walkUpActive && audio.status === 'error' && audio.error ? audio.error : null;
   const spotify = song?.sourceType === 'spotify' ? spotifyOpenUrl(song) : null;
-  const queue = upNext(team, game.batterIndex, 3);
 
   function play() {
     setNotice(null);
     if (status === 'paused') return playback.resume();
     if (playCurrentWalkUp() === 'no-song') setNotice('No walk-up song assigned yet.');
+  }
+
+  function tap(p: (typeof batters)[number]) {
+    setNotice(null);
+    const r = playPlayer(team!, p);
+    if (r === 'no-song') setNotice(`${p.name} has no walk-up song yet.`);
+    if (r === 'spotify') {
+      const link = spotifyOpenUrl(store.song(p.walkUpSongId)!);
+      if (link) window.open(link, '_blank', 'noopener,noreferrer');
+    }
   }
 
   async function relink(files: FileList | null) {
@@ -156,22 +165,25 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
       </section>
 
       <section className="upnext">
-        <h2>UP NEXT</h2>
-        {queue.length === 0 ? (
-          <p className="muted">Only one batter in the lineup.</p>
-        ) : (
-          <ol>
-            {queue.map((p, i) => (
-              <li key={`${p.id}-${i}`}>
-                <button disabled={locked} onClick={() => store.setBatterIndex(lineup(team).findIndex((x) => x.id === p.id))}>
+        <h2>BATTING ORDER · TAP A NAME TO PLAY</h2>
+        <ol>
+          {batters.map((p, i) => {
+            const isCurrent = p.id === batter.id;
+            const sng = store.song(p.walkUpSongId);
+            const sounding = audio.track?.ref === p.id && (audio.status === 'playing' || audio.status === 'loading');
+            return (
+              <li key={p.id}>
+                <button className={`${isCurrent ? 'current' : ''} ${sounding ? 'sounding' : ''}`} disabled={locked} onClick={() => tap(p)} aria-label={`${sounding ? 'Stop' : 'Play'} ${p.name}'s walk-up song`}>
+                  <span className="pos">{i + 1}</span>
                   <span className="num">#{p.number || '–'}</span>
                   <span className="nm">{p.name}</span>
-                  <span className="sg">{store.song(p.walkUpSongId)?.name ?? '—'}</span>
+                  <span className="sg">{sng ? sng.name : 'no song'}</span>
+                  <span className="go" aria-hidden="true">{sounding ? '■' : '▶'}</span>
                 </button>
               </li>
-            ))}
-          </ol>
-        )}
+            );
+          })}
+        </ol>
       </section>
     </div>
   );

@@ -10,7 +10,6 @@ import { Home } from './screens/Home';
 import { MusicLibrary } from './screens/MusicLibrary';
 import { PlayerEditor } from './screens/PlayerEditor';
 import { Players } from './screens/Players';
-import { PlaylistEditor } from './screens/PlaylistEditor';
 import { Settings } from './screens/Settings';
 import { TeamEditor, TeamSelector } from './screens/TeamSelector';
 import { Transfer } from './screens/Transfer';
@@ -32,8 +31,6 @@ function Router() {
       return <PlayerEditor key={screen.playerId ?? 'new'} playerId={screen.playerId} />;
     case 'songs':
       return <MusicLibrary />;
-    case 'playlists':
-      return <PlaylistEditor />;
     case 'setup':
       return <GameSetup />;
     case 'settings':

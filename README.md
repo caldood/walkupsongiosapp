@@ -1,10 +1,10 @@
 # Game Day Music
 
 A Little League game-day music controller that runs in **Safari** (macOS and iPhone/iPad; also Chrome/Edge/Firefox) as an
-offline-capable web app. It is a plain website, not a native iOS app. Connect your laptop or phone to a Bluetooth speaker and run two things with almost no friction:
+offline-capable web app. It is a plain website, not a native iOS app. Connect your laptop or phone to a Bluetooth speaker and run walk-up songs with almost no friction.
 
-* **Defense Music** – a continuous playlist while the team is in the field or warming up.
-* **Walk-Up Music** – tap once to play the current batter's song clip (e.g. Enter Sandman 0:42–1:02), tap once for the next batter.
+**Walk-up music for every batter.** Open Game Mode, see the batting order, and **tap a player's name** to play their song
+clip (e.g. Enter Sandman 0:42–1:02) — optionally with a spoken announcement over it. Or use **NEXT BATTER →** and **PLAY**.
 
 No backend, no account, no internet needed for game day. Your music never leaves your phone.
 
@@ -29,7 +29,7 @@ so `localhost:5173`, a LAN IP and the deployed site each start empty — export/
 
 **Songs → Add Music** copies MP3/M4A/AAC/WAV files into the browser's IndexedDB; playback uses that copy, so the
 original file can move or be deleted. To keep a tap-to-play start instant (Safari only allows `play()` directly
-inside a click/tap), the app pre-loads the whole batting order and the start of the defense playlist whenever the
+inside a click/tap), the app pre-loads the whole batting order whenever the
 lineup or audio changes.
 
 ## Deploy to GitHub Pages
@@ -54,16 +54,15 @@ static host (Netlify, Cloudflare Pages, S3, a plain folder) with no configuratio
    They are copied into the app's private storage on your phone.
 3. **Team setup** → create the team. **Players** → add players, set jersey numbers, pick a walk-up song and a clip
    (start/end like `0:42` / `1:02`; leave End blank for the default length). Use ▶ Test.
-4. **Playlists** → create "Defense Warmup" and add songs.
-5. **Game setup** walks through team → batting order → songs → defense playlist → Enter Game Mode.
-6. Open the app once more in Airplane Mode to confirm it works offline.
+4. **Game setup** walks through team → batting order → songs → Start game.
+5. Open the app once more in Airplane Mode to confirm it works offline.
 
 **At the field**
 
 1. Connect the phone to the Bluetooth speaker in iOS Settings (the app plays through whatever output iOS is using;
    use Settings → **Test speaker** to check).
 2. In iOS Settings set Auto-Lock to Never *or* leave "Keep screen awake" on in the app (needs iOS 16.4+).
-3. Open the app → **DEFENSE MUSIC** or **WALK-UP MUSIC**. The bottom bar switches DEFENSE ⇄ WALK-UP in one tap.
+3. Open the app → **START GAME**. The batting order is on screen: **tap a name to play that player's song** (tap the playing name again to stop it).
 4. Walk-up: **▶ PLAY WALK-UP** → clip stops by itself at the end time → **NEXT BATTER →**.
    Use **🔒** to lock navigation (Next/Previous, mode tabs, inning, up-next) so pockets and kids can't mess it up;
    Play/Pause/Stop stay live. Unlock by holding the button.
@@ -71,22 +70,21 @@ static host (Netlify, Cloudflare Pages, S3, a plain folder) with no configuratio
 
 Settings include: default walk-up length (10/15/20/30s, per-player override), **Auto advance** (moves the lineup to the
 next batter after a walk-up finishes), **Auto play next batter** (off by default, requires Auto advance), shuffle/repeat
-for defense, theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
+theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 
 ## Fade-out and reordering
 
 * **Fade-out:** walk-up clips ease out over 1–3 seconds (Settings → *Fade out at the end of a walk-up*, default 2s, or Off).
   The fade is scheduled on the Web Audio clock from the real playback position, so it lands exactly on the clip end and
   pauses/resumes with the music. When a clip has an announcer, the clip is stretched so the name finishes before the fade starts.
-* **Drag and drop:** drag the ⠿ handle to reorder the batting order (Players, Game setup) and defense playlists. It uses Pointer
+* **Drag and drop:** drag the ⠿ handle to reorder the batting order (Players, Game setup). It uses Pointer
   Events, so it works with touch on iPhone and with a mouse; the list auto-scrolls near the edges, and the handle also responds
   to ↑ / ↓ on a keyboard.
 
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
-Add recordings with **Songs → Add announcer recordings** (they're kept apart from music, so they never show up in
-playlists), then pick one in the player editor and set when it starts (seconds after the music). Both play at the same
+Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts (seconds after the music). Both play at the same
 time; the music dips while the announcer talks (Settings → *Music level while the announcer speaks*) and rises back
 afterwards. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
 
@@ -98,7 +96,7 @@ announcer is used. If an announcer file is missing the music plays alone and the
 ## Import / export
 
 *Team → Import / export*. Exports a `.json` file with the team, players, batting order, clip times, song **metadata**
-(name, file name, size), defense playlists and settings. **Audio files are never exported** (copyright and size).
+(name, file name, size), announcer recordings and settings. **Audio files are never exported** (copyright and size).
 Importing creates a *new* team (nothing is overwritten); songs you already have are matched by file name (and size);
 the rest are listed as *missing* until you re-select the audio files (matched by file name, in bulk).
 
@@ -108,7 +106,7 @@ the rest are listed as *missing* until you re-select the audio files (matched by
 |---|---|
 | **Local file access** | Safari (iOS) has no persistent file handles (no File System Access API). The app *copies* picked files into **IndexedDB** instead. |
 | **Storage eviction** | Safari may evict site data for sites you haven't used in ~7 days, or under storage pressure — **unless the site is added to the Home Screen**, which is exempt from the 7‑day rule. The app also requests persistent storage. Keep an exported team file as backup; if audio is ever gone the app shows "Walk-up song not available on this device." with *Choose Audio File*. |
-| **Audio start needs a tap** | iOS only lets audio start from a user tap. The app starts playback directly in the tap handler and pre-loads the current/next batter's audio so it starts instantly. If the very first play needs a second tap it says "Tap Play to start audio." After the first tap, auto-advance / playlist progression work. |
+| **Audio start needs a tap** | iOS only lets audio start from a user tap. The app starts playback directly in the tap handler and pre-loads the current/next batter's audio so it starts instantly. If the very first play needs a second tap it says "Tap Play to start audio." After the first tap, auto-advance works. |
 | **Volume / fades** | iOS Safari ignores script volume on plain audio; use the phone's buttons. The only volume the app controls is the music dip under the announcer (via Web Audio). Walk-up clips fade out via Web Audio (see above). |
 | **Screen lock / background** | Audio keeps playing with the screen locked, but iOS throttles timers, so a clip end may overshoot by ~1s while locked. Lock-screen play/pause works via Media Session. Keep the screen on during walk-ups for exact timing. |
 | **Interruptions** | Calls/Siri pause playback (the app shows Paused; tap Resume). Disconnecting the speaker pauses too. |
@@ -123,15 +121,15 @@ the rest are listed as *missing* until you re-select the audio files (matched by
 ```
 src/
   core/      Pure TypeScript domain logic – no DOM, no React. Portable to a native app.
-             types, battingOrder, clip, game, playlistQueue, songs, teams, teamTransfer (import/export)
+             types, battingOrder, clip, game, songs, teams, teamTransfer (import/export)
   audio/     AudioManager (the single authoritative playback state machine over ONE <audio> element),
              HtmlAudioBackend (DOM wrapper + iOS unlock), metadata, platform (wake lock, Media Session, output)
   storage/   Repository interface; IdbRepository (IndexedDB), MemoryRepository (tests/fallback),
              AudioLibrary (blob → object-URL cache), settingsStorage (localStorage for tiny prefs)
-  state/     AppStore (config + game state, framework-free), PlaybackController (walk-up + defense queue on
+  state/     AppStore (config + game state, framework-free), PlaybackController (walk-up playback on
              top of AudioManager), gameActions (next batter, auto-advance, mode switching), hooks
-  screens/   Home, GameShell, WalkUpMode, DefenseMode, TeamSelector/TeamEditor, Players, PlayerEditor,
-             MusicLibrary, PlaylistEditor, GameSetup, Settings, Transfer
+  screens/   Home, GameShell, WalkUpMode, TeamSelector/TeamEditor, Players, PlayerEditor,
+             MusicLibrary, GameSetup, Settings, Transfer
   components/ shared UI (dialogs, hold button, song picker, missing-audio panel…)
 public/      manifest, service worker (precache list is generated at build), icons
 ```
@@ -152,14 +150,14 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 101 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
-defense playlist progression (repeat, shuffle, skipping missing audio), import/export round trips and re-linking,
+`npm test` runs 91 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
 
 The UI was also exercised end-to-end in headless Chromium with iPhone emulation (390×844 portrait and 844×390
-landscape): importing WAV files, building a team, walk-up clip auto-stop, auto-advance on/off, defense
-playlist, lock/unlock, reset confirmation, export/import with missing-audio re-link, and offline reload through the
+landscape): importing WAV files, building a team, walk-up clip auto-stop, auto-advance on/off,
+tap-a-name-to-play, lock/unlock, reset confirmation, export/import with missing-audio re-link, and offline reload through the
 service worker. **Always do a real-device check on Safari before game day** (see the checklist above).
 
 ## Roadmap

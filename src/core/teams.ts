@@ -1,7 +1,7 @@
 import { reconcileOrder } from './battingOrder';
 import type { IdGenerator } from './ids';
 import { newId } from './ids';
-import { DEFAULT_TEAM_SETTINGS, type Player, type Playlist, type Team } from './types';
+import { DEFAULT_TEAM_SETTINGS, type Player, type Team } from './types';
 
 export function createTeam(name: string, id: IdGenerator = newId): Team {
   return {
@@ -9,18 +9,12 @@ export function createTeam(name: string, id: IdGenerator = newId): Team {
     name: name.trim() || 'My Team',
     players: [],
     battingOrder: [],
-    defensePlaylists: [],
-    activeDefensePlaylistId: null,
     settings: { ...DEFAULT_TEAM_SETTINGS },
   };
 }
 
 export function createPlayer(fields: Partial<Player> & { name: string }, id: IdGenerator = newId): Player {
   return { id: id(), number: '', walkUpSongId: null, clipStart: 0, clipEnd: null, ...fields };
-}
-
-export function createPlaylist(name: string, songIds: string[] = [], id: IdGenerator = newId): Playlist {
-  return { id: id(), name: name.trim() || 'Playlist', songIds };
 }
 
 /** Adds a player and puts them at the bottom of the batting order. */
@@ -48,7 +42,7 @@ export function assignWalkUp(team: Team, playerId: string, songId: string | null
   };
 }
 
-/** Removes a deleted song from every player and playlist. */
+/** Removes a deleted song from every player. */
 export function detachSong(team: Team, songId: string): Team {
   return {
     ...team,
@@ -57,7 +51,6 @@ export function detachSong(team: Team, songId: string): Team {
       walkUpSongId: p.walkUpSongId === songId ? null : p.walkUpSongId,
       announcerSongId: p.announcerSongId === songId ? null : p.announcerSongId,
     })),
-    defensePlaylists: team.defensePlaylists.map((pl) => ({ ...pl, songIds: pl.songIds.filter((s) => s !== songId) })),
   };
 }
 
@@ -69,20 +62,12 @@ export function duplicateTeam(team: Team, id: IdGenerator = newId): Team {
     playerIds.set(p.id, nid);
     return { ...p, id: nid };
   });
-  const playlistIds = new Map<string, string>();
-  const defensePlaylists = team.defensePlaylists.map((pl) => {
-    const nid = id();
-    playlistIds.set(pl.id, nid);
-    return { ...pl, id: nid, songIds: [...pl.songIds] };
-  });
   return {
     ...team,
     id: id(),
     name: `${team.name} (copy)`,
     players,
     battingOrder: team.battingOrder.map((p) => playerIds.get(p)).filter((p): p is string => !!p),
-    defensePlaylists,
-    activeDefensePlaylistId: team.activeDefensePlaylistId ? (playlistIds.get(team.activeDefensePlaylistId) ?? null) : null,
     settings: { ...team.settings },
   };
 }

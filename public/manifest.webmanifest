@@ -1,7 +1,7 @@
 {
   "name": "Game Day Music",
   "short_name": "Game Music",
-  "description": "Defense music and walk-up songs for Little League games.",
+  "description": "Walk-up songs for Little League games.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

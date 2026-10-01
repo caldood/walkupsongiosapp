@@ -1,6 +1,6 @@
 import { currentBatter, lineup } from '../core/battingOrder';
 import { fitAnnouncer, resolveClip } from '../core/clip';
-import { DEFAULT_ANNOUNCER_DELAY, type GameMode, type Player, type Team } from '../core/types';
+import { DEFAULT_ANNOUNCER_DELAY, type Player, type Team } from '../core/types';
 import { audioManager, playback, store } from './app';
 import type { WalkUpRequest } from './playback';
 
@@ -44,6 +44,25 @@ export function playWalkUpFor(team: Team, player: Player, opts: { preview?: bool
   return 'started';
 }
 
+export type TapResult = 'started' | 'stopped' | 'no-song' | 'spotify';
+
+/**
+ * Tap on a player's name: make them the current batter and play their walk-up right away.
+ * Tapping the player whose song is already sounding stops it instead (so a second tap is "stop").
+ */
+export function playPlayer(team: Team, player: Player): TapResult {
+  const index = lineup(team).findIndex((p) => p.id === player.id);
+  if (index >= 0) store.setBatterIndex(index);
+  const a = audioManager.getState();
+  if (a.track?.ref === player.id && (a.status === 'playing' || a.status === 'paused' || a.status === 'loading')) {
+    playback.stopAll();
+    return 'stopped';
+  }
+  const result = playWalkUpFor(team, player);
+  preloadBatters();
+  return result;
+}
+
 export function playCurrentWalkUp() {
   const team = store.activeTeam;
   if (!team) return 'no-song' as const;
@@ -52,8 +71,7 @@ export function playCurrentWalkUp() {
 }
 
 /**
- * Warms the audio cache for the whole batting order (current batter first) and the start of the
- * defense playlist, so a tap can call audio.play() synchronously inside the gesture. Safari
+ * Warms the audio cache for the whole batting order (current batter first), so a tap can call audio.play() synchronously inside the gesture. Safari
  * (desktop and iOS) rejects play() that happens after an await outside the tap.
  */
 export function preloadBatters() {
@@ -62,13 +80,12 @@ export function preloadBatters() {
   const i = store.getState().game.batterIndex;
   const order = lineup(team);
   const rotated = order.slice(i).concat(order.slice(0, i));
-  const playlist = team.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId);
-  playback.preload([...rotated.map((b) => b.walkUpSongId), ...(playlist?.songIds.slice(0, 3) ?? [])]);
+  playback.preload(rotated.map((b) => b.walkUpSongId));
   playback.preloadAnnouncers(rotated.map((b) => b.announcerSongId));
 }
 
 export function nextBatter() {
-  // Moving on to the next batter ends any walk-up that's still sounding, but never cuts defense music.
+  // Moving on to the next batter ends any walk-up that's still sounding.
   const a = audioManager.getState();
   if (a.track?.kind === 'walkup') playback.stopAll();
   store.nextBatter();
@@ -80,22 +97,6 @@ export function previousBatter() {
   if (a.track?.kind === 'walkup') playback.stopAll();
   store.previousBatter();
   preloadBatters();
-}
-
-/** Switching modes silences the other mode's sound: walk-up stops, defense pauses (so it can resume). */
-export function switchMode(mode: GameMode) {
-  const a = audioManager.getState();
-  if (mode === 'walkup' && a.track?.kind === 'defense') playback.defensePause();
-  if (mode === 'defense' && a.track?.kind === 'walkup') playback.stopAll();
-  store.setMode(mode);
-}
-
-export function startActiveDefensePlaylist() {
-  const team = store.activeTeam;
-  const playlist = team?.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId);
-  if (!team || !playlist) return false;
-  playback.startDefense(playlist.id, playlist.songIds, { shuffle: team.settings.defenseShuffle, repeat: team.settings.defenseRepeat });
-  return true;
 }
 
 export function resetGame() {

@@ -6,7 +6,6 @@ export const initialGame = (teamId: string | null = null): GameState => ({
   inning: 1,
   half: 'top',
   batterIndex: 0,
-  mode: 'walkup',
 });
 
 export function advanceBatter(game: GameState, team: Team): GameState {
@@ -33,5 +32,5 @@ export function retreatHalfInning(game: GameState): GameState {
 
 /** Back to the start of the game for the same team (does not touch team configuration). */
 export function resetGame(game: GameState): GameState {
-  return { ...initialGame(game.teamId), mode: game.mode };
+  return initialGame(game.teamId);
 }

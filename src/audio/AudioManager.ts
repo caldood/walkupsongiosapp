@@ -9,7 +9,7 @@
 
 export type AudioStatus = 'idle' | 'loading' | 'playing' | 'paused' | 'error';
 export type AudioErrorCode = 'missing' | 'needs-gesture' | 'unsupported' | 'failed';
-export type TrackKind = 'walkup' | 'defense';
+export type TrackKind = 'walkup';
 
 export interface TrackRequest {
   /** Caller's identifier (song id) – lets the UI show which row is playing. */
@@ -377,10 +377,10 @@ export function classifyPlayError(err: unknown): AudioErrorCode {
 }
 
 /** Friendly, non-technical text for each error. Never shows raw browser messages. */
-export function describeAudioError(code: AudioErrorCode, kind: TrackKind = 'walkup'): string {
+export function describeAudioError(code: AudioErrorCode, _kind: TrackKind = 'walkup'): string {
   switch (code) {
     case 'missing':
-      return kind === 'walkup' ? 'Walk-up song not available on this device.' : 'This song is not available on this device.';
+      return 'Walk-up song not available on this device.';
     case 'needs-gesture':
       return 'Tap Play to start audio.';
     case 'unsupported':

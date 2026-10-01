@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { benchPlayers, lineup } from '../core/battingOrder';
 import { isPlayable } from '../core/songs';
 import { playback, store } from '../state/app';
-import { switchMode, preloadBatters, walkUpRequest } from '../state/gameActions';
+import { preloadBatters, walkUpRequest } from '../state/gameActions';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Screen, Section } from '../components/ui';
@@ -10,7 +10,7 @@ import { MissingAudio } from '../components/MissingAudio';
 import { SongPicker } from '../components/SongPicker';
 import { SortableList } from '../components/SortableList';
 
-const STEPS = ['Team', 'Batting order', 'Songs', 'Defense playlist', 'Go!'];
+const STEPS = ['Team', 'Batting order', 'Songs', 'Go!'];
 
 // Remembered across navigation (e.g. Add player → back) so the wizard doesn't jump to step 1.
 let rememberedStep = 0;
@@ -133,35 +133,14 @@ export function GameSetup() {
       )}
 
       {step === 3 && team && (
-        <Section hint="Defense Mode plays this playlist.">
-          {team.defensePlaylists.length === 0 && <p className="muted">No playlists yet.</p>}
-          <ul className="list">
-            {team.defensePlaylists.map((pl) => (
-              <li key={pl.id}>
-                <button className={`row pick ${pl.id === team.activeDefensePlaylistId ? 'selected' : ''}`} onClick={() => store.setActivePlaylist(pl.id)}>
-                  <span className="grow">
-                    <span className="row-title">{pl.name}</span>
-                    <span className="row-sub">{pl.songIds.length} songs</span>
-                  </span>
-                  {pl.id === team.activeDefensePlaylistId && <span>✓</span>}
-                </button>
-              </li>
-            ))}
-          </ul>
-          <button className="btn wide" onClick={() => nav.go({ name: 'playlists' })}>Edit playlists</button>
-        </Section>
-      )}
-
-      {step === 4 && team && (
         <Section>
           <div className="summary">
             <p><strong>{team.name}</strong></p>
             <p>{order.length} batter{order.length === 1 ? "" : "s"} · default walk-up {team.settings.defaultClipSeconds}s</p>
-            <p>Defense: {team.defensePlaylists.find((p) => p.id === team.activeDefensePlaylistId)?.name ?? 'none'}</p>
             {missing.length > 0 ? <p className="warn-text">⚠ {missing.length} song(s) missing on this device.</p> : <p>✓ All songs ready.</p>}
           </div>
           <p className="hint">Connect your Bluetooth speaker now, then check the sound with Settings › Test speaker.</p>
-          <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); switchMode('walkup'); nav.go({ name: 'game' }); }}>
+          <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); nav.go({ name: 'game' }); }}>
             ENTER GAME MODE
           </button>
         </Section>

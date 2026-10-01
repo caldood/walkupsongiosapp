@@ -32,7 +32,7 @@ export function TeamSelector() {
                 <button className="row pick" onClick={() => store.selectTeam(t.id)} aria-pressed={active}>
                   <span className="grow">
                     <span className="row-title">{t.name}</span>
-                    <span className="row-sub">{t.players.length} players · {lineup(t).length} batting · {t.defensePlaylists.length} playlists</span>
+                    <span className="row-sub">{t.players.length} players · {lineup(t).length} batting</span>
                   </span>
                   {active && <span className="tag">SELECTED</span>}
                 </button>
@@ -41,7 +41,7 @@ export function TeamSelector() {
                   <button className="btn btn-small" onClick={() => store.duplicateTeam(t.id)}>Duplicate</button>
                   <button
                     className="btn btn-small btn-danger"
-                    onClick={() => confirm.ask({ title: `Delete ${t.name}?`, message: 'Players, batting order and playlists for this team will be removed. Songs stay in your library.', confirmLabel: 'Delete team', danger: true }, () => store.deleteTeam(t.id))}
+                    onClick={() => confirm.ask({ title: `Delete ${t.name}?`, message: 'Players and the batting order for this team will be removed. Songs stay in your library.', confirmLabel: 'Delete team', danger: true }, () => store.deleteTeam(t.id))}
                   >
                     Delete
                   </button>
@@ -70,7 +70,7 @@ export function TeamEditor({ teamId }: { teamId: string }) {
         <input id="tn" className="field" defaultValue={team.name} onBlur={(e) => store.renameTeam(team.id, e.target.value)} />
       </Section>
       <Section hint="Open Settings to change playback options for the selected team.">
-        <p className="muted">{team.players.length} players · {team.defensePlaylists.length} defense playlists</p>
+        <p className="muted">{team.players.length} players</p>
       </Section>
     </Screen>
   );

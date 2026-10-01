@@ -38,7 +38,7 @@ export function MusicLibrary() {
 
   const spValid = !!spName.trim() && !!spotifyOpenUrl({ spotifyUri: spUri });
   const sorted = [...songs].sort((a, b) => a.name.localeCompare(b.name));
-  const usedBy = (s: Song) => teams.filter((t) => t.players.some((p) => p.walkUpSongId === s.id) || t.defensePlaylists.some((pl) => pl.songIds.includes(s.id))).map((t) => t.name);
+  const usedBy = (s: Song) => teams.filter((t) => t.players.some((p) => p.walkUpSongId === s.id || p.announcerSongId === s.id)).map((t) => t.name);
 
   return (
     <Screen title="Songs">
@@ -92,7 +92,7 @@ export function MusicLibrary() {
                     {usedBy(s).length > 0 && <p className="hint">Used by: {usedBy(s).join(', ')}</p>}
                     <button
                       className="btn btn-danger"
-                      onClick={() => confirm.ask({ title: `Delete “${s.name}”?`, message: 'It will be removed from all players and playlists and the audio deleted from this device.', confirmLabel: 'Delete', danger: true }, () => void store.deleteSong(s.id))}
+                      onClick={() => confirm.ask({ title: `Delete “${s.name}”?`, message: 'It will be removed from all players and the audio deleted from this device.', confirmLabel: 'Delete', danger: true }, () => void store.deleteSong(s.id))}
                     >
                       Delete song
                     </button>

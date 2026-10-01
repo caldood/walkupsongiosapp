@@ -266,13 +266,16 @@ textarea.field { font-size: 15px; font-family: ui-monospace, monospace; }
 .upnext li button, .upnext li .static { width: 100%; display: flex; gap: 12px; align-items: baseline; padding: 12px 14px; min-height: 52px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; text-align: left; color: inherit; font-size: 19px; }
 .upnext .num { font-family: ui-monospace, monospace; }
 .upnext .nm { font-weight: 800; }
-.upnext .sg { margin-left: auto; font-size: 14px; color: var(--muted); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.upnext li button.current { border-color: var(--amber); background: var(--panel-2); }
+.upnext li button.sounding { background: var(--grass-dark); color: #fff; border-color: var(--grass); }
+.upnext li button.sounding .sg, .upnext li button.sounding .num { color: #fff; }
+.upnext .pos { width: 22px; text-align: center; color: var(--muted); font-weight: 800; }
+.upnext .go { font-size: 20px; min-width: 24px; text-align: right; }
+.upnext li button { align-items: center; min-height: 60px; }
+.upnext li button:disabled { opacity: 0.55; }
+.upnext .sg { margin-left: auto; flex: 1; text-align: right; font-size: 14px; color: var(--muted); max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 8px 10px calc(8px + var(--safe-b)); background: #060b16; border-top: 1px solid var(--line); }
-.tabbar button { min-height: 62px; border-radius: 16px; border: 2px solid #2a3b5e; background: #131d33; color: #f4f1e8; font-weight: 850; letter-spacing: 0.06em; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
-.tabbar button span { font-size: 20px; }
-.tabbar button.on { background: var(--amber); color: #111; border-color: var(--amber); }
-.is-locked .btn-next, .is-locked .tabbar { filter: grayscale(1); }
+.is-locked .btn-next { filter: grayscale(1); }
 
 /* landscape phones & tablets: controls beside the batter, compact chrome */
 @media (orientation: landscape) and (max-height: 560px) {
@@ -294,9 +297,7 @@ textarea.field { font-size: 15px; font-family: ui-monospace, monospace; }
   .btn-play { min-height: 68px; }
   .btn-next { min-height: 64px; }
   .btn-big { min-height: 54px; font-size: 18px; }
-  .tabbar { padding-top: 4px; padding-bottom: calc(4px + var(--safe-b)); }
-  .tabbar button { min-height: 46px; flex-direction: row; justify-content: center; gap: 8px; }
-  .home-main { display: grid; grid-template-columns: 1fr 1fr; }
+      .home-main { display: grid; grid-template-columns: 1fr 1fr; }
   .home-main > .banner, .footnote { grid-column: 1 / -1; }
   .home-grid { grid-column: 1 / -1; grid-template-columns: repeat(6, 1fr); }
   .tile { min-height: 70px; font-size: 22px; }
@@ -307,3 +308,21 @@ textarea.field { font-size: 15px; font-family: ui-monospace, monospace; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 :focus-visible { outline: 3px solid var(--amber); outline-offset: 2px; }
+
+/* Phones in portrait: keep the batting order (tap a name to play) on screen without scrolling. */
+@media (max-width: 600px) and (orientation: portrait) {
+  .game .content { padding-top: 6px; }
+  .walkup { gap: 8px; }
+  .batter-card { padding: 8px 12px; gap: 2px; }
+  .batter-number { font-size: clamp(34px, 10vw, 46px); }
+  .batter-name { font-size: clamp(26px, 8vw, 36px); }
+  .batter-song { font-size: clamp(16px, 4.6vw, 20px); }
+  .controls { gap: 8px; }
+  .btn-play { min-height: 64px; font-size: clamp(22px, 6.4vw, 28px); }
+  .btn-next { min-height: 60px; }
+  .btn-big { min-height: 52px; font-size: 18px; }
+  .btn-text.prev { min-height: 36px; padding: 4px; }
+  .controls .pair { gap: 8px; }
+  .times { font-size: 18px; }
+  .upnext li button { min-height: 56px; }
+}

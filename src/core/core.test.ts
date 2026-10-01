@@ -3,9 +3,8 @@ import { addToOrder, benchPlayers, clampIndex, currentBatter, lineup, moveInOrde
 import { describeClip, fitAnnouncer, resolveClip } from './clip';
 import { formatTime, parseTime } from './format';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from './game';
-import { buildQueue, currentSongId, nextInQueue, prevInQueue, upcoming } from './playlistQueue';
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
-import { addPlayer, assignWalkUp, createPlayer, createPlaylist, createTeam, detachSong, duplicateTeam, removePlayer } from './teams';
+import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
 import type { GameState, Team } from './types';
 
@@ -78,25 +77,19 @@ describe('player / song assignment', () => {
     const changed = assignWalkUp(t, p.id, 's2');
     expect(changed.players[1]).toMatchObject({ walkUpSongId: 's2', clipStart: 0, clipEnd: null });
   });
-  it('detaches a deleted song everywhere', () => {
+  it('detaches a deleted song from players', () => {
     let t = sampleTeam();
     t = assignWalkUp(t, t.players[0].id, 's1');
-    t = { ...t, defensePlaylists: [createPlaylist('Warmup', ['s1', 's2'])] };
     const d = detachSong(t, 's1');
     expect(d.players[0].walkUpSongId).toBeNull();
-    expect(d.defensePlaylists[0].songIds).toEqual(['s2']);
   });
-  it('duplicates a team with fresh, consistent ids', () => {
-    let t = sampleTeam();
-    t = { ...t, defensePlaylists: [createPlaylist('W', ['s1'])] };
-    t.activeDefensePlaylistId = t.defensePlaylists[0].id;
+  it('duplicates a team with fresh ids and a remapped batting order', () => {
+    const t = sampleTeam();
     const c = duplicateTeam(t);
     expect(c.id).not.toBe(t.id);
     expect(c.name).toBe('Del Mar (copy)');
     expect(lineup(c).map((p) => p.name)).toEqual(lineup(t).map((p) => p.name));
     expect(c.players.every((p) => !t.players.some((o) => o.id === p.id))).toBe(true);
-    expect(c.activeDefensePlaylistId).toBe(c.defensePlaylists[0].id);
-    expect(c.activeDefensePlaylistId).not.toBe(t.activeDefensePlaylistId);
   });
 });
 
@@ -153,56 +146,11 @@ describe('game state', () => {
     expect(retreatHalfInning(g)).toMatchObject({ inning: 1, half: 'bottom' });
     expect(retreatHalfInning(initialGame('t'))).toMatchObject({ inning: 1, half: 'top' });
   });
-  it('reset returns to the start but keeps team and mode', () => {
+  it('reset returns to the start but keeps the team', () => {
     const t = sampleTeam();
-    let g: GameState = { ...initialGame(t.id), inning: 4, half: 'bottom', batterIndex: 3, mode: 'defense' };
+    let g: GameState = { ...initialGame(t.id), inning: 4, half: 'bottom', batterIndex: 3 };
     g = resetGame(g);
-    expect(g).toEqual({ teamId: t.id, inning: 1, half: 'top', batterIndex: 0, mode: 'defense' });
-  });
-});
-
-describe('defense playlist progression', () => {
-  const ids = ['a', 'b', 'c'];
-  it('plays in order and stops at the end without repeat', () => {
-    let q = buildQueue(ids, { shuffle: false });
-    expect(currentSongId(q)).toBe('a');
-    q = nextInQueue(q, false)!;
-    q = nextInQueue(q, false)!;
-    expect(currentSongId(q)).toBe('c');
-    expect(nextInQueue(q, false)).toBeNull();
-  });
-  it('wraps with repeat', () => {
-    let q = buildQueue(ids, { shuffle: false });
-    q = nextInQueue(nextInQueue(q, true)!, true)!;
-    expect(currentSongId(nextInQueue(q, true)!)).toBe('a');
-  });
-  it('goes to previous songs', () => {
-    const q = buildQueue(ids, { shuffle: false, startSongId: 'b' });
-    expect(currentSongId(prevInQueue(q, false))).toBe('a');
-    expect(currentSongId(prevInQueue(prevInQueue(q, false), false))).toBe('a');
-    expect(currentSongId(prevInQueue(prevInQueue(q, true), true))).toBe('c');
-  });
-  it('shuffles deterministically with an RNG and plays each song once per pass', () => {
-    let n = 0;
-    const rng = () => [0.9, 0.1, 0.5, 0.3, 0.7][n++ % 5];
-    const q = buildQueue(['a', 'b', 'c', 'd'], { shuffle: true, rng });
-    expect([...q.order].sort()).toEqual([0, 1, 2, 3]);
-  });
-  it('keeps the chosen start song first when shuffled', () => {
-    const q = buildQueue(ids, { shuffle: true, startSongId: 'c', rng: () => 0.5 });
-    expect(currentSongId(q)).toBe('c');
-    expect(q.order).toHaveLength(3);
-  });
-  it('does not repeat the same song back-to-back when reshuffling', () => {
-    let q = buildQueue(['a', 'b'], { shuffle: true, rng: () => 0 });
-    q = { ...q, pos: q.order.length - 1 };
-    const last = currentSongId(q);
-    const n = nextInQueue(q, true, { shuffle: true, rng: () => 0 })!;
-    expect(currentSongId(n)).not.toBe(last);
-  });
-  it('handles empty queues and lists upcoming songs', () => {
-    expect(nextInQueue(buildQueue([], { shuffle: false }), true)).toBeNull();
-    expect(upcoming(buildQueue(ids, { shuffle: false }), 5)).toEqual(['b', 'c']);
+    expect(g).toEqual({ teamId: t.id, inning: 1, half: 'top', batterIndex: 0 });
   });
 });
 
@@ -216,7 +164,7 @@ describe('missing songs', () => {
     let t = sampleTeam();
     t = assignWalkUp(t, t.players[0].id, local.id);
     t = assignWalkUp(t, t.players[1].id, spot.id);
-    t = { ...t, defensePlaylists: [createPlaylist('W', [other.id], id)] };
+    t = assignWalkUp(t, t.players[2].id, other.id);
     const songs = [local, other, spot];
     expect(findMissingSongs(t, songs, new Set()).map((s) => s.name)).toEqual(['Enter Sandman', 'Other']);
     expect(findMissingSongs(t, songs, new Set([local.id])).map((s) => s.name)).toEqual(['Other']);
@@ -260,8 +208,7 @@ describe('import / export', () => {
     t = assignWalkUp(t, t.players[0].id, song.id);
     t = assignWalkUp(t, t.players[1].id, spot.id);
     t = { ...t, players: t.players.map((p, i) => (i === 0 ? { ...p, clipStart: 42, clipEnd: 62 } : p)) };
-    t = { ...t, defensePlaylists: [createPlaylist('Warmup', [song.id], id)], settings: { ...t.settings, defaultClipSeconds: 20, autoAdvance: true } };
-    t.activeDefensePlaylistId = t.defensePlaylists[0].id;
+    t = { ...t, settings: { ...t.settings, defaultClipSeconds: 20, autoAdvance: true } };
     return { t, song, spot };
   }
 
@@ -286,8 +233,6 @@ describe('import / export', () => {
     const imported = result.newSongs.find((s) => s.id === brevan.walkUpSongId)!;
     expect(imported.filename).toBe('Enter Sandman.mp3');
     expect(result.missingSongIds).toEqual([imported.id]); // spotify isn't "missing audio"
-    expect(result.team.defensePlaylists[0].songIds).toEqual([imported.id]);
-    expect(result.team.activeDefensePlaylistId).toBe(result.team.defensePlaylists[0].id);
   });
 
   it('reuses songs already on the device (same filename + size) so audio is found automatically', () => {

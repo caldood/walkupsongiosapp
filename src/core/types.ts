@@ -45,20 +45,12 @@ export interface Player {
   clipEnd?: number | null;
 }
 
-export interface Playlist {
-  id: ID;
-  name: string;
-  songIds: ID[];
-}
-
 export interface TeamSettings {
   defaultClipSeconds: number;
   /** After a walk-up finishes, move the lineup to the next batter. */
   autoAdvance: boolean;
   /** …and also play that batter's walk-up (OFF by default). */
   autoPlayNext: boolean;
-  defenseShuffle: boolean;
-  defenseRepeat: boolean;
   /** Music level (0–1) while the announcer speaks. 1 = no ducking. */
   announcerDuck: number;
   /** Seconds of fade-out at the end of a walk-up clip. 0 = hard cut. */
@@ -71,13 +63,10 @@ export interface Team {
   players: Player[];
   /** Player ids, in batting order. Players not listed are on the bench. */
   battingOrder: ID[];
-  defensePlaylists: Playlist[];
-  activeDefensePlaylistId?: ID | null;
   settings: TeamSettings;
 }
 
 export type Half = 'top' | 'bottom';
-export type GameMode = 'defense' | 'walkup';
 
 export interface GameState {
   teamId: ID | null;
@@ -85,7 +74,6 @@ export interface GameState {
   half: Half;
   /** Index into the team's batting order. */
   batterIndex: number;
-  mode: GameMode;
 }
 
 export type Theme = 'dark' | 'light';
@@ -101,8 +89,6 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   defaultClipSeconds: 15,
   autoAdvance: false,
   autoPlayNext: false,
-  defenseShuffle: false,
-  defenseRepeat: true,
   announcerDuck: 0.35,
   fadeOutSeconds: 2,
 };

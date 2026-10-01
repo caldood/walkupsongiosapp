@@ -1,4 +1,4 @@
-import { addPlayer, assignWalkUp, createPlayer, createPlaylist, createTeam, detachSong, duplicateTeam, removePlayer, updatePlayer } from '../core/teams';
+import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, removePlayer, updatePlayer } from '../core/teams';
 import { clampIndex, lineup, moveInOrder, reconcileOrder } from '../core/battingOrder';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from '../core/game';
 import { createLocalSong, createSpotifySong, findMissingSongs, matchFilesToSongs } from '../core/songs';
@@ -7,10 +7,8 @@ import { newId, type IdGenerator } from '../core/ids';
 import {
   DEFAULT_APP_SETTINGS,
   type AppSettings,
-  type GameMode,
   type GameState,
   type Player,
-  type Playlist,
   type Song,
   type Team,
   type TeamSettings,
@@ -171,7 +169,7 @@ export class AppStore {
 
   selectTeam(id: string | null) {
     this.updateSettings({ activeTeamId: id });
-    this.setGame({ ...initialGame(id), mode: this.state.game.mode });
+    this.setGame(initialGame(id));
   }
 
   // ── players & batting order ─────────────────────────────────────────────────
@@ -287,30 +285,6 @@ export class AppStore {
     this.opts.onAudioChanged?.(id);
   }
 
-  // ── playlists ───────────────────────────────────────────────────────────────
-  savePlaylist(p: Playlist | { name: string; songIds?: string[] }): Playlist | undefined {
-    const t = this.activeTeam;
-    if (!t) return;
-    if ('id' in p) {
-      this.updateTeam({ ...t, defensePlaylists: t.defensePlaylists.map((x) => (x.id === p.id ? p : x)) });
-      return p;
-    }
-    const created = createPlaylist(p.name, p.songIds ?? [], this.id);
-    this.updateTeam({ ...t, defensePlaylists: [...t.defensePlaylists, created], activeDefensePlaylistId: t.activeDefensePlaylistId ?? created.id });
-    return created;
-  }
-
-  deletePlaylist(id: string) {
-    this.mutateActive((t) => {
-      const rest = t.defensePlaylists.filter((p) => p.id !== id);
-      return { ...t, defensePlaylists: rest, activeDefensePlaylistId: t.activeDefensePlaylistId === id ? (rest[0]?.id ?? null) : t.activeDefensePlaylistId };
-    });
-  }
-
-  setActivePlaylist(id: string | null) {
-    this.mutateActive((t) => ({ ...t, activeDefensePlaylistId: id }));
-  }
-
   // ── game ────────────────────────────────────────────────────────────────────
   private setGame(patch: Partial<GameState>) {
     const game = { ...this.state.game, ...patch };
@@ -340,9 +314,6 @@ export class AppStore {
   }
   prevHalfInning() {
     this.applyGame((g) => retreatHalfInning(g));
-  }
-  setMode(mode: GameMode) {
-    this.setGame({ mode });
   }
   resetGame() {
     this.applyGame((g) => resetGame(g));
