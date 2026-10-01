@@ -45,8 +45,10 @@ export function GameShell() {
             ›
           </button>
         </div>
-        <AudioOutput compact />
-        {playing && <span className="onair">● ON AIR</span>}
+        <div className="status-cell">
+          {playing && <span className="onair">● ON AIR</span>}
+          <AudioOutput compact />
+        </div>
       </header>
 
       {locked && (

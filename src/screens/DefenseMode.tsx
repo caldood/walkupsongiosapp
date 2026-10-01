@@ -101,18 +101,16 @@ export function DefenseMode({ locked }: { locked: boolean }) {
         <button className="btn-big btn-stop wide" onClick={() => playback.stopAll()} disabled={!mine}>
           ⏹ STOP
         </button>
-        <div className="pair">
-          <button className="btn-text" onClick={() => playback.defensePrev()} disabled={locked || !loaded}>
+        <div className="trio">
+          <button className="chip" onClick={() => playback.defensePrev()} disabled={locked || !loaded}>
             ⏮ Previous
           </button>
-          <div className="chips">
-            <button className={`chip ${team.settings.defenseShuffle ? 'on' : ''}`} aria-pressed={team.settings.defenseShuffle} onClick={() => setOption('defenseShuffle', !team.settings.defenseShuffle)} disabled={locked}>
-              🔀 Shuffle
-            </button>
-            <button className={`chip ${team.settings.defenseRepeat ? 'on' : ''}`} aria-pressed={team.settings.defenseRepeat} onClick={() => setOption('defenseRepeat', !team.settings.defenseRepeat)} disabled={locked}>
-              🔁 Repeat
-            </button>
-          </div>
+          <button className={`chip ${team.settings.defenseShuffle ? 'on' : ''}`} aria-pressed={team.settings.defenseShuffle} onClick={() => setOption('defenseShuffle', !team.settings.defenseShuffle)} disabled={locked}>
+            🔀 Shuffle
+          </button>
+          <button className={`chip ${team.settings.defenseRepeat ? 'on' : ''}`} aria-pressed={team.settings.defenseRepeat} onClick={() => setOption('defenseRepeat', !team.settings.defenseRepeat)} disabled={locked}>
+            🔁 Repeat
+          </button>
         </div>
       </section>
 
