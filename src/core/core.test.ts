@@ -242,7 +242,8 @@ describe('missing songs', () => {
   });
   it('builds Spotify open links', () => {
     expect(spotifyOpenUrl({ spotifyUri: 'spotify:track:4uLU6hMCjMI75M1A2tKUQC' })).toBe('https://open.spotify.com/track/4uLU6hMCjMI75M1A2tKUQC');
-    expect(spotifyOpenUrl({ spotifyUri: 'https://open.spotify.com/track/abc?si=1' })).toContain('open.spotify.com');
+    expect(spotifyOpenUrl({ spotifyUri: 'https://open.spotify.com/intl-de/track/abc?si=1' })).toBe('https://open.spotify.com/track/abc');
+    expect(spotifyOpenUrl({ spotifyUri: 'https://evil.com/https://open.spotify.com/track/abc' })).toBeNull();
     expect(spotifyOpenUrl({ spotifyUri: 'javascript:alert(1)' })).toBeNull();
     expect(spotifyOpenUrl({})).toBeNull();
   });

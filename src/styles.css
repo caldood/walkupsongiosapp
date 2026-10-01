@@ -57,6 +57,7 @@ ol, ul { list-style: none; margin: 0; padding: 0; }
 /* ── layout ─────────────────────────────────────────────────────────────── */
 .screen {
   height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: var(--safe-t) var(--safe-r) 0 var(--safe-l);

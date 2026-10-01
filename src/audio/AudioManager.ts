@@ -37,7 +37,7 @@ export interface AudioState {
   error: AudioErrorCode | null;
 }
 
-export type BackendEvent = 'metadata' | 'ended' | 'error' | 'interrupted';
+export type BackendEvent = 'metadata' | 'ended' | 'error' | 'interrupted' | 'time';
 
 /** What AudioManager needs from a media element. Implemented by HtmlAudioBackend (and by fakes in tests). */
 export interface MediaBackend {
@@ -229,6 +229,10 @@ export class AudioManager {
         }
         break;
       }
+      case 'time':
+        // The media element's own clock: a second chance to enforce the clip end if timers are throttled (screen locked).
+        this.tick();
+        break;
       case 'ended':
         if (this.state.status === 'playing' || this.state.status === 'loading') this.finish();
         break;

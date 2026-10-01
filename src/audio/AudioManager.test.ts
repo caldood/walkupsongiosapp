@@ -192,3 +192,17 @@ describe('AudioManager subscriptions', () => {
     await flush();
   });
 });
+
+describe('AudioManager background safety', () => {
+  it("enforces the clip end from the media element's own timeupdate when timers are throttled", async () => {
+    vi.useFakeTimers();
+    const b = new FakeBackend();
+    const a = new AudioManager(b);
+    a.play({ key: 's', kind: 'walkup', title: 'T', url: 'blob:x', start: 5, end: 10 });
+    await vi.advanceTimersByTimeAsync(0);
+    b.currentTime = 10.1; // no interval tick has run
+    b.emit('time');
+    expect(a.getState().status).toBe('idle');
+    vi.useRealTimers();
+  });
+});

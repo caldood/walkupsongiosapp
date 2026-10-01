@@ -19,6 +19,7 @@ export class HtmlAudioBackend implements MediaBackend {
     const emit = (e: BackendEvent) => this.listeners.forEach((l) => l(e));
     el.addEventListener('loadedmetadata', () => emit('metadata'));
     el.addEventListener('ended', () => emit('ended'));
+    el.addEventListener('timeupdate', () => emit('time'));
     el.addEventListener('error', () => {
       if (el.getAttribute('src')) emit('error');
     });

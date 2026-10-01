@@ -25,7 +25,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
   event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then(
+    caches.match(req, { ignoreSearch: true, ignoreVary: true }).then(
       (hit) =>
         hit ||
         fetch(req).catch(() =>

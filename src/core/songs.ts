@@ -28,13 +28,14 @@ export function createSpotifySong(name: string, uriOrUrl: string, id: IdGenerato
   return { id: id(), name: name.trim() || 'Spotify song', filename: '', sourceType: 'spotify', spotifyUri: uriOrUrl.trim() };
 }
 
-/** Spotify web link for a stored uri/url ("spotify:track:ID" or https URL). */
+/** Canonical https link for a stored Spotify uri/url, or null if it isn't a Spotify link. */
 export function spotifyOpenUrl(song: Pick<Song, 'spotifyUri'>): string | null {
   const v = song.spotifyUri?.trim();
   if (!v) return null;
-  const m = /^spotify:(track|album|playlist|episode):([A-Za-z0-9]+)$/.exec(v);
-  if (m) return `https://open.spotify.com/${m[1]}/${m[2]}`;
-  return /^https:\/\/open\.spotify\.com\//.test(v) ? v : null;
+  const uri = /^spotify:(track|album|playlist|episode):([A-Za-z0-9]+)$/.exec(v);
+  if (uri) return `https://open.spotify.com/${uri[1]}/${uri[2]}`;
+  const web = /^https:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode)\/([A-Za-z0-9]+)/.exec(v);
+  return web ? `https://open.spotify.com/${web[1]}/${web[2]}` : null;
 }
 
 /** Song ids a team depends on (walk-ups + defense playlists). */
