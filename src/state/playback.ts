@@ -111,6 +111,16 @@ export class PlaybackController {
     void this.resolver.get(req.songId).then((url) => this.audio.play({ ...base, url }));
   }
 
+  /** Plays a whole song from the start (library preview). Never triggers walk-up auto-advance. */
+  previewSong(song: Song): void {
+    this.defenseToken++;
+    this.rememberDefensePosition();
+    const base = { key: song.id, ref: 'preview', kind: 'walkup' as const, title: song.name, subtitle: song.artist, start: 0, end: null };
+    const cached = this.resolver.peek(song.id);
+    if (cached) this.audio.play({ ...base, url: cached });
+    else void this.resolver.get(song.id).then((url) => this.audio.play({ ...base, url }));
+  }
+
   /** Preload audio for upcoming batters/songs so taps start instantly. */
   preload(songIds: (string | undefined | null)[]) {
     for (const id of songIds) if (id) void this.resolver.get(id).catch(() => null);
@@ -144,6 +154,16 @@ export class PlaybackController {
 
   defensePause(): void {
     this.audio.pause();
+  }
+
+  /** Pause whatever is playing (walk-up or defense). */
+  pause(): void {
+    this.audio.pause();
+  }
+
+  /** Resume whatever is paused (must be called from a tap on iOS). */
+  resume(): void {
+    this.audio.resume();
   }
 
   defenseNext(): void {
