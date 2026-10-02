@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { scheduleDuck, scheduleFadeOut, SILENCE, type ParamLike } from './automation';
+import { configureLimiter, scheduleDuck, scheduleFadeOut, SILENCE, type ParamLike } from './automation';
 import { encodeWav, measureMix } from './render';
 
 class Rec implements ParamLike {
@@ -74,5 +74,18 @@ describe('shared gain automation (same curves live and in the QA render)', () =>
     const g = new Rec();
     scheduleFadeOut(g, 0, 13, 2);
     expect(g.calls).toEqual(['cancel@0', 'set 1@0', 'set 1@13', `ramp ${SILENCE}@15`]);
+  });
+});
+
+describe('limiters (so the music-dip setting means what it says)', () => {
+  const mk = () => ({ threshold: { value: 0 }, knee: { value: 0 }, ratio: { value: 0 }, attack: { value: 0 }, release: { value: 0 } });
+  it('the voice limiter is much lower than the master safety limiter', () => {
+    const v = mk();
+    const m = mk();
+    configureLimiter(v, 'voice');
+    configureLimiter(m, 'master');
+    expect(v.threshold.value).toBeLessThan(m.threshold.value - 3);
+    expect(m.threshold.value).toBeGreaterThanOrEqual(-2); // near-transparent on normal mixes
+    expect(m.ratio.value).toBeGreaterThanOrEqual(12);
   });
 });

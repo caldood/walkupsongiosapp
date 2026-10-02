@@ -100,7 +100,7 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
 Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts: Settings → *Announcer comes in after* (3, 4 or 5 seconds for the whole team), or a custom number in a player's editor. Both play at the same
 time; the announcer is boosted (Settings → *Announcer volume*, default Loud) and the music dips while they talk
-(*Music level while the announcer speaks*), rising back afterwards. A limiter on the output keeps the boosted voice from distorting. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
+(*Music level while the announcer speaks*), rising back afterwards. The boosted voice has its own limiter (so it does not pump the music), plus a light safety limiter on the final mix. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
 
 How it works: the music still streams from the single `<audio>` element but is routed through a Web Audio `GainNode`
 (this is what makes ducking work on iPhone, where `audio.volume` is ignored); the announcer is decoded into an
@@ -179,7 +179,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 118 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 119 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

@@ -36,17 +36,32 @@ export function scheduleFadeOut(g: ParamLike, now: number, startIn: number, dura
   g.linearRampToValueAtTime(SILENCE, t0 + Math.max(0.05, duration));
 }
 
-/** Master limiter: stops a boosted announcer from clipping. */
-export function configureLimiter(l: {
+type LimiterLike = {
   threshold: { value: number };
   knee: { value: number };
   ratio: { value: number };
   attack: { value: number };
   release: { value: number };
-}): void {
-  l.threshold.value = -4;
-  l.knee.value = 3;
-  l.ratio.value = 20;
-  l.attack.value = 0.002;
-  l.release.value = 0.12;
+};
+
+/**
+ * Two limiters, so the music-dip setting means what it says:
+ *  - 'voice' tames the boosted announcer on its own (it doesn't touch the music);
+ *  - 'master' is only a near-transparent safety net on the final mix (rarely does anything).
+ * One shared limiter on everything would also pump the music down whenever the loud voice is present.
+ */
+export function configureLimiter(l: LimiterLike, kind: 'voice' | 'master'): void {
+  if (kind === 'voice') {
+    l.threshold.value = -6;
+    l.knee.value = 6;
+    l.ratio.value = 12;
+    l.attack.value = 0.003;
+    l.release.value = 0.1;
+  } else {
+    l.threshold.value = -1;
+    l.knee.value = 0;
+    l.ratio.value = 20;
+    l.attack.value = 0.0005;
+    l.release.value = 0.08;
+  }
 }

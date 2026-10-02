@@ -3,6 +3,16 @@ import { store } from '../state/app';
 import { useActiveTeam } from '../state/hooks';
 import { Segmented, Toggle } from './ui';
 
+type Option = { value: number; label: string };
+
+/** Keeps the control honest: if the saved value isn't one of the presets (older/imported team), show it as an extra choice. */
+function withCurrent(options: Option[], current: number, label: (v: number) => string): Option[] {
+  const has = options.some((o) => Math.abs(o.value - current) < 1e-6);
+  if (has || !Number.isFinite(current)) return options;
+  const descending = options.length > 1 && options[0].value > options[options.length - 1].value;
+  return [...options, { value: current, label: label(current) }].sort((a, b) => (descending ? b.value - a.value : a.value - b.value));
+}
+
 /** The per-team playback preferences. Shared by Settings and Team editor. */
 export function TeamSettingsForm() {
   const team = useActiveTeam();
@@ -21,12 +31,16 @@ export function TeamSettingsForm() {
         <Segmented
           label="Fade out"
           value={s.fadeOutSeconds ?? 0}
-          options={[
-            { value: 0, label: 'Off' },
-            { value: 1, label: '1s' },
-            { value: 2, label: '2s' },
-            { value: 3, label: '3s' },
-          ]}
+          options={withCurrent(
+            [
+              { value: 0, label: 'Off' },
+              { value: 1, label: '1s' },
+              { value: 2, label: '2s' },
+              { value: 3, label: '3s' },
+            ],
+            s.fadeOutSeconds ?? 0,
+            (v) => `${v}s`,
+          )}
           onChange={(v) => store.updateTeamSettings({ fadeOutSeconds: v })}
         />
         <span className="row-sub">The music eases out instead of cutting off.</span>
@@ -46,12 +60,16 @@ export function TeamSettingsForm() {
         <Segmented
           label="Announcer volume"
           value={s.announcerVolume}
-          options={[
-            { value: 1, label: 'Normal' },
-            { value: 2, label: 'Louder' },
-            { value: 2.5, label: 'Loud' },
-            { value: 4, label: 'Max' },
-          ]}
+          options={withCurrent(
+            [
+              { value: 1, label: 'Normal' },
+              { value: 2, label: 'Louder' },
+              { value: 2.5, label: 'Loud' },
+              { value: 4, label: 'Max' },
+            ],
+            s.announcerVolume,
+            (v) => `${v}×`,
+          )}
           onChange={(v) => store.updateTeamSettings({ announcerVolume: v })}
         />
         <span className="row-sub">Boosts the announcer's voice over the music. A limiter keeps it from distorting.</span>
@@ -61,13 +79,17 @@ export function TeamSettingsForm() {
         <Segmented
           label="Announcer ducking"
           value={s.announcerDuck}
-          options={[
-            { value: 1, label: 'Off' },
-            { value: 0.5, label: 'Light' },
-            { value: 0.3, label: 'Medium' },
-            { value: 0.15, label: 'Strong' },
-            { value: 0.06, label: 'Max' },
-          ]}
+          options={withCurrent(
+            [
+              { value: 1, label: 'Off' },
+              { value: 0.5, label: 'Light' },
+              { value: 0.3, label: 'Medium' },
+              { value: 0.15, label: 'Strong' },
+              { value: 0.06, label: 'Max' },
+            ].sort((a, b) => b.value - a.value),
+            s.announcerDuck,
+            (v) => `${Math.round(v * 100)}%`,
+          )}
           onChange={(v) => store.updateTeamSettings({ announcerDuck: v })}
         />
         <span className="row-sub">Only applies to players that have an announcer recording.</span>

@@ -50,11 +50,11 @@ export async function renderWalkUpMix(spec: MixSpec): Promise<AudioBuffer> {
 
   const musicGain = ctx.createGain();
   const fadeGain = ctx.createGain();
-  const limiter = ctx.createDynamicsCompressor();
-  configureLimiter(limiter);
+  const master = ctx.createDynamicsCompressor();
+  configureLimiter(master, 'master');
   musicGain.connect(fadeGain);
-  fadeGain.connect(limiter);
-  limiter.connect(ctx.destination);
+  fadeGain.connect(master);
+  master.connect(ctx.destination);
 
   const music = ctx.createBufferSource();
   music.buffer = spec.music;
@@ -65,7 +65,10 @@ export async function renderWalkUpMix(spec: MixSpec): Promise<AudioBuffer> {
     const a = spec.announcer;
     const announcerGain = ctx.createGain();
     announcerGain.gain.value = Math.max(0, a.gain);
-    announcerGain.connect(fadeGain);
+    const voiceLimiter = ctx.createDynamicsCompressor();
+    configureLimiter(voiceLimiter, 'voice');
+    announcerGain.connect(voiceLimiter);
+    voiceLimiter.connect(fadeGain);
     const src = ctx.createBufferSource();
     src.buffer = a.buffer;
     src.connect(announcerGain);

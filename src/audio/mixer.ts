@@ -11,9 +11,9 @@ function audioContextCtor(): Ctor | null {
 /**
  * Mixes the announcer over the walk-up music with Web Audio.
  *
- *   <audio> ──▶ MediaElementSource ──▶ musicGain ──┐
- *                                      (ducking)    ├──▶ fadeGain ──▶ limiter ──▶ speakers
- *   announcer AudioBuffer ──▶ announcerGain ───────┘   (fade-out)   (stops clipping)
+ *   <audio> ──▶ MediaElementSource ──▶ musicGain ───────────────┐
+ *                                      (ducking)               ├──▶ fadeGain ──▶ safety limiter ──▶ speakers
+ *   announcer AudioBuffer ──▶ announcerGain ──▶ voice limiter ─┘   (fade-out)
  *                              (boost)
  *
  * The music still streams from the single <audio> element (no big decode in memory); routing it through a
@@ -54,13 +54,17 @@ export class WebAudioMixer implements OverlayEngine {
       const fade = ctx.createGain();
       const announcer = ctx.createGain();
       ctx.createMediaElementSource(this.element).connect(music);
-      // Boosting the announcer can push peaks past full scale; a limiter keeps that clean instead of distorting.
-      const limiter = ctx.createDynamicsCompressor();
-      configureLimiter(limiter);
+      // Boosting the announcer can push peaks past full scale. Limit the voice by itself (so the music isn't pumped
+      // down along with it) and keep only a light safety limiter on the final mix.
+      const voiceLimiter = ctx.createDynamicsCompressor();
+      configureLimiter(voiceLimiter, 'voice');
+      const master = ctx.createDynamicsCompressor();
+      configureLimiter(master, 'master');
       music.connect(fade);
-      fade.connect(limiter);
-      limiter.connect(ctx.destination);
-      announcer.connect(fade);
+      fade.connect(master);
+      master.connect(ctx.destination);
+      announcer.connect(voiceLimiter);
+      voiceLimiter.connect(fade);
       this.musicGain = music;
       this.fadeGain = fade;
       this.announcerGain = announcer;
