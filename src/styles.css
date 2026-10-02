@@ -433,3 +433,10 @@ textarea.field { font-size: 15px; font-family: var(--mono); }
 
 /* Home sections keep their natural height; the page scrolls instead of squashing them. */
 .home-main > * { flex: none; }
+
+/* QA mix export (player editor) */
+.mixcard { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mixcard audio { width: 100%; }
+.mixcard dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
+.mixcard dt { color: var(--muted); font-weight: 600; }
+.mixcard dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: 13px; }

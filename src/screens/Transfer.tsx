@@ -4,27 +4,7 @@ import { store } from '../state/app';
 import { useActiveTeam } from '../state/hooks';
 import { Banner, Screen, Section } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
-
-async function shareOrDownload(filename: string, text: string): Promise<'shared' | 'downloaded'> {
-  const file = new File([text], filename, { type: 'application/json' });
-  try {
-    if (navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ files: [file], title: filename });
-      return 'shared';
-    }
-  } catch (e) {
-    if (e instanceof DOMException && e.name === 'AbortError') return 'shared'; // user closed the share sheet
-  }
-  const url = URL.createObjectURL(file);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.append(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  return 'downloaded';
-}
+import { shareOrDownload } from '../components/share';
 
 export function Transfer() {
   const team = useActiveTeam();

@@ -1,10 +1,13 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { fitAnnouncer, resolveClip } from '../core/clip';
 import { formatTime, parseTime } from '../core/format';
 import { spotifyOpenUrl } from '../core/songs';
 import { createPlayer } from '../core/teams';
 import { playback, store } from '../state/app';
 import { walkUpRequest } from '../state/gameActions';
+import { exportWalkUpMix, MixError, type MixResult } from '../state/exportMix';
+import { renderSupported } from '../audio/render';
+import { shareOrDownload } from '../components/share';
 import { MAX_CLIP_SECONDS } from '../core/types';
 import { useActiveTeam, usePlayback, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
@@ -32,6 +35,10 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
   const [announcerId, setAnnouncerId] = useState(existing?.announcerSongId ?? null);
   const [delay, setDelay] = useState(existing?.announcerDelay != null ? String(existing.announcerDelay) : '');
   const [pickingAnnouncer, setPickingAnnouncer] = useState(false);
+  const [mix, setMix] = useState<(MixResult & { url: string }) | null>(null);
+  const [mixBusy, setMixBusy] = useState(false);
+  const [mixError, setMixError] = useState<string | null>(null);
+  useEffect(() => () => { if (mix) URL.revokeObjectURL(mix.url); }, [mix]);
 
   if (!team) return null;
   const song = songs.find((s) => s.id === songId);
@@ -79,6 +86,31 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
     setAnnouncerId(null);
     setDelay('');
     document.querySelector('.content')?.scrollTo(0, 0);
+  }
+
+  /** QA: render the finished walk-up (clip + fade + announcer) to one WAV, with a report and a player. */
+  async function runExport() {
+    if (!song || timeError || delayError) return;
+    setMixBusy(true);
+    setMixError(null);
+    setMix(null);
+    try {
+      const res = await exportWalkUpMix(team!, { id: existing?.id ?? 'preview', name: name || 'Player', clipStart: startSec ?? 0, clipEnd: endSec, walkUpSongId: songId, announcerSongId: announcerId, announcerDelay: delay.trim() ? delaySec : undefined });
+      setMix({ ...res, url: URL.createObjectURL(res.blob) });
+    } catch (e) {
+      const code = e instanceof MixError ? e.code : 'failed';
+      setMixError(
+        {
+          'no-song': 'Choose a walk-up song first.',
+          spotify: "Spotify songs can't be exported — only audio stored on this device.",
+          missing: "The song's audio isn't on this device. Choose the file again in Songs.",
+          unsupported: "This browser couldn't decode that audio file.",
+          failed: "Couldn't render the mix.",
+        }[code],
+      );
+    } finally {
+      setMixBusy(false);
+    }
   }
 
   function test() {
@@ -210,6 +242,48 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
             <Icon name={testing ? 'stop' : 'play'} size={18} /> {testing ? 'Stop test' : 'Test this clip'}
           </button>
           {audio.status === 'error' && audio.error === 'missing' && <p className="error-text">Walk-up song not available on this device.</p>}
+        </Section>
+      )}
+
+      {song?.sourceType === 'local' && (
+        <Section title="QA export" hint="Renders the finished walk-up — music clip, fade-out and announcer mixed together — as one WAV file, built the same way as playback in the game.">
+          <button className="btn wide" onClick={() => void runExport()} disabled={mixBusy || !!timeError || !!delayError || !renderSupported()}>
+            <Icon name="box" size={20} /> {mixBusy ? 'Rendering…' : 'Export mixed audio (WAV)'}
+          </button>
+          {!renderSupported() && <p className="error-text">This browser can't render audio offline.</p>}
+          {mixError && <p className="error-text">{mixError}</p>}
+          {mix && (
+            <div className="mixcard">
+              <audio controls src={mix.url} preload="metadata" />
+              <dl>
+                <dt>File</dt>
+                <dd>{mix.filename}</dd>
+                <dt>Length</dt>
+                <dd>{mix.report.durationSeconds.toFixed(1)} s</dd>
+                <dt>Peak</dt>
+                <dd className={mix.report.clipped ? 'warn-text' : ''}>
+                  {Number.isFinite(mix.report.peakDb) ? `${mix.report.peakDb.toFixed(1)} dBFS` : 'silent'}
+                  {mix.report.clipped ? ' — at full scale (lower the announcer volume)' : ''}
+                </dd>
+                <dt>Music</dt>
+                <dd>
+                  {mix.report.songName} from {formatTime(mix.report.clipStart)}
+                  {mix.report.fadeOut > 0 ? `, ${mix.report.fadeOut}s fade-out` : ', no fade-out'}
+                </dd>
+                <dt>Announcer</dt>
+                <dd>
+                  {mix.report.announcerName
+                    ? mix.report.announcerMissing
+                      ? `${mix.report.announcerName} — audio missing, not included`
+                      : `${mix.report.announcerName}, ${mix.report.announcerStartsAt?.toFixed(1)}–${mix.report.announcerEndsAt?.toFixed(1)} s, ${mix.report.gain}× volume, music dipped to ${Math.round((mix.report.duck ?? 1) * 100)}%`
+                    : 'none'}
+                </dd>
+              </dl>
+              <button className="btn btn-primary wide" onClick={() => void shareOrDownload(mix.filename, mix.blob, 'audio/wav')}>
+                <Icon name="external" size={20} /> Save / share WAV
+              </button>
+            </div>
+          )}
         </Section>
       )}
 

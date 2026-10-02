@@ -1,4 +1,5 @@
 import type { Overlay, OverlayEngine } from './AudioManager';
+import { configureLimiter, scheduleDuck, scheduleFadeOut } from './automation';
 
 type Ctor = typeof AudioContext;
 
@@ -55,11 +56,7 @@ export class WebAudioMixer implements OverlayEngine {
       ctx.createMediaElementSource(this.element).connect(music);
       // Boosting the announcer can push peaks past full scale; a limiter keeps that clean instead of distorting.
       const limiter = ctx.createDynamicsCompressor();
-      limiter.threshold.value = -4;
-      limiter.knee.value = 3;
-      limiter.ratio.value = 20;
-      limiter.attack.value = 0.002;
-      limiter.release.value = 0.12;
+      configureLimiter(limiter);
       music.connect(fade);
       fade.connect(limiter);
       limiter.connect(ctx.destination);
@@ -104,29 +101,13 @@ export class WebAudioMixer implements OverlayEngine {
     this.source = src;
 
     // Duck the music under the announcement, then bring it back up.
-    const g = this.musicGain.gain;
-    const now = ctx.currentTime;
-    const duck = Math.min(1, Math.max(0, overlay.duck));
-    const rampIn = Math.min(0.25, Math.max(0, when - now));
-    const end = when + (buffer.duration - offset);
-    g.cancelScheduledValues(now);
-    g.setValueAtTime(1, now);
-    g.setValueAtTime(1, when - rampIn);
-    g.linearRampToValueAtTime(duck, when);
-    g.setValueAtTime(duck, end);
-    g.linearRampToValueAtTime(1, end + 0.4);
+    scheduleDuck(this.musicGain.gain, ctx.currentTime, when, when + (buffer.duration - offset), overlay.duck);
   }
 
   fadeOut(startIn: number, duration: number): void {
     const ctx = this.ctx;
     if (!ctx || !this.fadeGain) return;
-    const g = this.fadeGain.gain;
-    const t0 = ctx.currentTime + Math.max(0, startIn);
-    g.cancelScheduledValues(ctx.currentTime);
-    g.setValueAtTime(1, ctx.currentTime);
-    g.setValueAtTime(1, t0);
-    // A short exponential-ish curve sounds smoother than a straight line: ramp to near-silence, then to 0.
-    g.linearRampToValueAtTime(0.0001, t0 + Math.max(0.05, duration));
+    scheduleFadeOut(this.fadeGain.gain, ctx.currentTime, startIn, duration);
   }
 
   fadeNow(duration: number): boolean {

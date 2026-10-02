@@ -107,6 +107,15 @@ How it works: the music still streams from the single `<audio>` element but is r
 `AudioBuffer` ahead of time and started on the Web Audio clock. The routing is only set up once a player with an
 announcer is used. If an announcer file is missing the music plays alone and the screen says so.
 
+## QA export of the mixed walk-up
+
+In the player editor, **QA export → Export mixed audio (WAV)** renders the finished walk-up — music clip, fade-out and the
+announcer mixed together — to a single 16-bit stereo WAV (44.1 kHz), using the player's current (even unsaved) settings. You get
+an in-page audio player to listen to it, a report (length, peak level in dBFS, whether it clips, announcer window, volume and
+music dip) and **Save / share WAV** (iOS share sheet, or a normal download). The render uses the same gain curves and limiter as
+live playback (`audio/automation.ts` is shared), so it is the file QA should compare against what the game plays. Spotify songs
+can't be exported (no audio on the device).
+
 ## Import / export
 
 *Team → Import / export*. Exports a `.json` file with the team, players, batting order, clip times, song **metadata**
@@ -164,7 +173,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 111 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 117 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
