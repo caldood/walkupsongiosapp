@@ -318,7 +318,7 @@ describe('normalizeTeam (settings migration)', () => {
   it('gives teams saved before newer settings existed the defaults, so fade-out is on', () => {
     const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 10, autoAdvance: true, autoPlayNext: false } } as unknown as Team;
     const t = normalizeTeam(old);
-    expect(t.settings).toMatchObject({ defaultClipSeconds: 10, autoAdvance: true, fadeOutSeconds: 2, announcerDuck: 0.35 });
+    expect(t.settings).toMatchObject({ defaultClipSeconds: 10, autoAdvance: true, fadeOutSeconds: 2, announcerDuck: 0.15 });
   });
   it('drops retired defense fields and keeps valid saved values', () => {
     const legacy = { ...createTeam('L'), defensePlaylists: [{ id: 'p' }], activeDefensePlaylistId: 'p', settings: { ...createTeam('x').settings, fadeOutSeconds: 0, defenseShuffle: true } } as unknown as Team;
@@ -328,13 +328,19 @@ describe('normalizeTeam (settings migration)', () => {
     expect((t.settings as Record<string, unknown>).fadeOutSeconds).toBe(0); // an explicit "Off" is respected
     expect((t.settings as Record<string, unknown>).defenseShuffle).toBeUndefined();
   });
+  it('moves a team still on the old shallow music dip (35%) to the deeper default, but keeps other choices', () => {
+    const base = createTeam('D');
+    expect(normalizeTeam({ ...base, settings: { ...base.settings, announcerDuck: 0.35 } }).settings.announcerDuck).toBe(0.15);
+    expect(normalizeTeam({ ...base, settings: { ...base.settings, announcerDuck: 0.06 } }).settings.announcerDuck).toBe(0.06);
+    expect(normalizeTeam({ ...base, settings: { ...base.settings, announcerDuck: 1 } }).settings.announcerDuck).toBe(1); // "Off" respected
+  });
   it('caps an old default length that is over 15 seconds', () => {
     const long = { ...createTeam('Long'), settings: { defaultClipSeconds: 30 } } as unknown as Team;
     expect(normalizeTeam(long).settings.defaultClipSeconds).toBe(15);
   });
   it('ignores garbage values', () => {
     const bad = { ...createTeam('B'), settings: { fadeOutSeconds: 'x', announcerDuck: NaN } } as unknown as Team;
-    expect(normalizeTeam(bad).settings).toMatchObject({ fadeOutSeconds: 2, announcerDuck: 0.35 });
+    expect(normalizeTeam(bad).settings).toMatchObject({ fadeOutSeconds: 2, announcerDuck: 0.15 });
   });
 });
 

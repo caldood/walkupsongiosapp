@@ -93,12 +93,14 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   defaultClipSeconds: 15,
   autoAdvance: false,
   autoPlayNext: false,
-  announcerDuck: 0.35,
+  announcerDuck: 0.15,
   announcerVolume: 2.5,
   announcerDelay: 3,
   fadeOutSeconds: 2,
 };
 
+/** The music level that used to be the default ("Medium"); teams still on it are moved to the deeper default. */
+export const LEGACY_ANNOUNCER_DUCK = 0.35;
 export const DEFAULT_ANNOUNCER_DELAY = 3;
 export const ANNOUNCER_DELAY_CHOICES = [3, 4, 5] as const;
 

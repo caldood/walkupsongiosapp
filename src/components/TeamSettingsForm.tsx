@@ -62,10 +62,11 @@ export function TeamSettingsForm() {
           label="Announcer ducking"
           value={s.announcerDuck}
           options={[
-            { value: 1, label: 'No dip' },
-            { value: 0.6, label: 'Light' },
-            { value: 0.35, label: 'Medium' },
+            { value: 1, label: 'Off' },
+            { value: 0.5, label: 'Light' },
+            { value: 0.3, label: 'Medium' },
             { value: 0.15, label: 'Strong' },
+            { value: 0.06, label: 'Max' },
           ]}
           onChange={(v) => store.updateTeamSettings({ announcerDuck: v })}
         />

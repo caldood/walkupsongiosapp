@@ -1,7 +1,7 @@
 import { reconcileOrder } from './battingOrder';
 import type { IdGenerator } from './ids';
 import { newId } from './ids';
-import { DEFAULT_TEAM_SETTINGS, MAX_CLIP_SECONDS, type Player, type Team } from './types';
+import { DEFAULT_TEAM_SETTINGS, LEGACY_ANNOUNCER_DUCK, MAX_CLIP_SECONDS, type Player, type Team } from './types';
 
 export function createTeam(name: string, id: IdGenerator = newId): Team {
   return {
@@ -86,6 +86,8 @@ export function normalizeTeam(team: Team): Team {
     const v = saved[key];
     if (typeof v === typeof DEFAULT_TEAM_SETTINGS[key] && !(typeof v === 'number' && !Number.isFinite(v))) (settings[key] as unknown) = v;
   }
+  // The old default dip (35%) was too shallow for the voice to cut through; move teams still on it to the new default.
+  if (settings.announcerDuck === LEGACY_ANNOUNCER_DUCK) settings.announcerDuck = DEFAULT_TEAM_SETTINGS.announcerDuck;
   settings.defaultClipSeconds = Math.min(MAX_CLIP_SECONDS, Math.max(1, settings.defaultClipSeconds));
   return { ...(rest as unknown as Team), settings };
 }
