@@ -33,7 +33,7 @@ class FakeEngine implements OverlayEngine {
   }
 }
 
-const overlay: Overlay = { clip: {}, duration: 3, delay: 2, duck: 0.3 };
+const overlay: Overlay = { clip: {}, duration: 3, delay: 2, duck: 0.3, gain: 2.5 };
 let backend: FakeBackend;
 let engine: FakeEngine;
 let audio: AudioManager;

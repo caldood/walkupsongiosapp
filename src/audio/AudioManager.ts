@@ -69,6 +69,8 @@ export interface Overlay {
   delay: number;
   /** Music level (0–1) while the overlay is speaking. */
   duck: number;
+  /** Gain applied to the overlay itself (1 = as recorded). */
+  gain: number;
 }
 
 /** Plays overlays alongside the media element (Web Audio in the browser; a fake in tests). */

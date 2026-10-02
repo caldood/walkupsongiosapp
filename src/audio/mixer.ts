@@ -10,9 +10,10 @@ function audioContextCtor(): Ctor | null {
 /**
  * Mixes the announcer over the walk-up music with Web Audio.
  *
- *   <audio> ──▶ MediaElementSource ──▶ musicGain ──▶ fadeGain ──┐
- *                                      (ducking)      (fade-out)    ├──▶ speakers
- *   announcer AudioBuffer ──▶ announcerGain ──▶ (fadeGain) ───────┘
+ *   <audio> ──▶ MediaElementSource ──▶ musicGain ──┐
+ *                                      (ducking)    ├──▶ fadeGain ──▶ limiter ──▶ speakers
+ *   announcer AudioBuffer ──▶ announcerGain ───────┘   (fade-out)   (stops clipping)
+ *                              (boost)
  *
  * The music still streams from the single <audio> element (no big decode in memory); routing it through a
  * GainNode is what lets us duck it under the announcer even on iPhone, where `audio.volume` is ignored.
@@ -52,8 +53,16 @@ export class WebAudioMixer implements OverlayEngine {
       const fade = ctx.createGain();
       const announcer = ctx.createGain();
       ctx.createMediaElementSource(this.element).connect(music);
+      // Boosting the announcer can push peaks past full scale; a limiter keeps that clean instead of distorting.
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -4;
+      limiter.knee.value = 3;
+      limiter.ratio.value = 20;
+      limiter.attack.value = 0.002;
+      limiter.release.value = 0.12;
       music.connect(fade);
-      fade.connect(ctx.destination);
+      fade.connect(limiter);
+      limiter.connect(ctx.destination);
       announcer.connect(fade);
       this.musicGain = music;
       this.fadeGain = fade;
@@ -89,6 +98,7 @@ export class WebAudioMixer implements OverlayEngine {
     this.stopOverlay();
     const src = ctx.createBufferSource();
     src.buffer = buffer;
+    this.announcerGain.gain.value = Math.max(0, overlay.gain);
     src.connect(this.announcerGain);
     src.start(when, offset);
     this.source = src;

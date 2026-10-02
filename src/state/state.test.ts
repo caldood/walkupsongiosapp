@@ -242,7 +242,7 @@ describe('PlaybackController with an announcer', () => {
     };
     const resolver = { peek: () => 'blob:m', get: async () => 'blob:m' };
     const pc = new PlaybackController(audio, resolver, () => undefined, { announcers });
-    const req = { playerId: 'p', songId: 'm', title: 'M', start: 0, end: 20, announcer: { songId: 'v', delay: 2, duck: 0.3 } };
+    const req = { playerId: 'p', songId: 'm', title: 'M', start: 0, end: 20, announcer: { songId: 'v', delay: 2, duck: 0.3, gain: 2.5 } };
 
     pc.playWalkUp(req); // announcer not decoded yet → music starts at once, announcer joins when ready
     await vi.advanceTimersByTimeAsync(0);

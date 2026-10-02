@@ -53,6 +53,8 @@ export interface TeamSettings {
   autoPlayNext: boolean;
   /** Music level (0–1) while the announcer speaks. 1 = no ducking. */
   announcerDuck: number;
+  /** Gain applied to the announcer recording (1 = as recorded, 2.5 = about +8 dB). */
+  announcerVolume: number;
   /** Seconds of fade-out at the end of a walk-up clip. 0 = hard cut. */
   fadeOutSeconds: number;
 }
@@ -90,6 +92,7 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   autoAdvance: false,
   autoPlayNext: false,
   announcerDuck: 0.35,
+  announcerVolume: 2.5,
   fadeOutSeconds: 2,
 };
 

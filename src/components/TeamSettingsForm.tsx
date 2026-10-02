@@ -32,6 +32,21 @@ export function TeamSettingsForm() {
         <span className="row-sub">The music eases out instead of cutting off.</span>
       </div>
       <div className="row stacked">
+        <span className="row-title">Announcer volume</span>
+        <Segmented
+          label="Announcer volume"
+          value={s.announcerVolume}
+          options={[
+            { value: 1, label: 'Normal' },
+            { value: 2, label: 'Louder' },
+            { value: 2.5, label: 'Loud' },
+            { value: 4, label: 'Max' },
+          ]}
+          onChange={(v) => store.updateTeamSettings({ announcerVolume: v })}
+        />
+        <span className="row-sub">Boosts the announcer's voice over the music. A limiter keeps it from distorting.</span>
+      </div>
+      <div className="row stacked">
         <span className="row-title">Music level while the announcer speaks</span>
         <Segmented
           label="Announcer ducking"

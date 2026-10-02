@@ -6,7 +6,7 @@ import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGam
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
 import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, normalizeTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
-import { DEFAULT_ANNOUNCER_DELAY, type GameState, type Team } from './types';
+import { DEFAULT_ANNOUNCER_DELAY, DEFAULT_TEAM_SETTINGS, type GameState, type Team } from './types';
 
 const seqId = () => {
   let n = 0;
@@ -341,5 +341,22 @@ describe('normalizeTeam (settings migration)', () => {
 describe('announcer default delay', () => {
   it('starts 3 seconds into the clip unless the player sets their own', () => {
     expect(DEFAULT_ANNOUNCER_DELAY).toBe(3);
+  });
+});
+
+describe('announcer volume setting', () => {
+  it('defaults to a boost and is filled in for teams saved before it existed', () => {
+    expect(DEFAULT_TEAM_SETTINGS.announcerVolume).toBeGreaterThan(1);
+    const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 10 } } as unknown as Team;
+    expect(normalizeTeam(old).settings.announcerVolume).toBe(DEFAULT_TEAM_SETTINGS.announcerVolume);
+  });
+  it('survives export / import and is bounded', () => {
+    const t = createTeam('T');
+    t.settings.announcerVolume = 4;
+    const parsed = parseTeamExport(serializeTeam(t, []));
+    expect(parsed.team.settings.announcerVolume).toBe(4);
+    const wild = JSON.parse(serializeTeam(t, []));
+    wild.team.settings.announcerVolume = 999;
+    expect(parseTeamExport(JSON.stringify(wild)).team.settings.announcerVolume).toBe(6);
   });
 });

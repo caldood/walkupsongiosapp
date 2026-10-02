@@ -32,7 +32,7 @@ export function walkUpRequest(
     start: clip.start,
     end: clip.end,
     fadeOut,
-    announcer: hasAnnouncer ? { songId: announcer.id, delay, duck: team.settings.announcerDuck } : undefined,
+    announcer: hasAnnouncer ? { songId: announcer.id, delay, duck: team.settings.announcerDuck, gain: team.settings.announcerVolume } : undefined,
   };
 }
 

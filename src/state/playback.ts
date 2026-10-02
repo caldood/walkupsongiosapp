@@ -15,7 +15,7 @@ export interface WalkUpRequest {
   start: number;
   end: number;
   /** Spoken name mixed over the music. */
-  announcer?: { songId: string; delay: number; duck: number };
+  announcer?: { songId: string; delay: number; duck: number; gain: number };
   /** Seconds of fade-out before `end` (0/undefined = hard cut). */
   fadeOut?: number;
 }
@@ -62,7 +62,7 @@ export class PlaybackController {
   playWalkUp(req: WalkUpRequest): void {
     const base = { key: req.songId, ref: req.playerId, kind: 'walkup' as const, title: req.title, subtitle: req.subtitle, start: req.start, end: req.end, fadeOut: req.fadeOut };
     const ann = req.announcer;
-    const overlayFor = (d: { clip: unknown; duration: number }) => ({ clip: d.clip, duration: d.duration, delay: ann!.delay, duck: ann!.duck });
+    const overlayFor = (d: { clip: unknown; duration: number }) => ({ clip: d.clip, duration: d.duration, delay: ann!.delay, duck: ann!.duck, gain: ann!.gain });
     const decoded = ann ? this.announcers?.peek(ann.songId) : null;
     const cached = this.resolver.peek(req.songId);
     if (cached) {
