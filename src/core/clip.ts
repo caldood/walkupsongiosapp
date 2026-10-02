@@ -49,3 +49,8 @@ export function fitAnnouncer(clip: Clip, delay: number, announcerSeconds: number
   if (clip.duration >= needed) return clip;
   return { start: clip.start, end: clip.start + needed, duration: needed };
 }
+
+/** When the announcer starts for a player: their own setting, otherwise the team's. */
+export function announcerDelayFor(player: Pick<Player, 'announcerDelay'>, settings: Pick<TeamSettings, 'announcerDelay'>): number {
+  return player.announcerDelay ?? settings.announcerDelay;
+}

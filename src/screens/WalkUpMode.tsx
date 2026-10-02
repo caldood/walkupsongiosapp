@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { describeAudioError } from '../audio/AudioManager';
 import { ACCEPTED_AUDIO } from '../audio/metadata';
 import { currentBatter, lineup } from '../core/battingOrder';
-import { describeClip, fitAnnouncer, resolveClip } from '../core/clip';
-import { DEFAULT_ANNOUNCER_DELAY } from '../core/types';
+import { announcerDelayFor, describeClip, fitAnnouncer, resolveClip } from '../core/clip';
 import { formatTime } from '../core/format';
 import { isPlayable, spotifyOpenUrl } from '../core/songs';
 import { playback, store } from '../state/app';
@@ -43,7 +42,7 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
   const announcer = store.song(batter.announcerSongId);
   const announcerReady = isPlayable(announcer, audioIds);
   const baseClip = song ? resolveClip(batter, song, team.settings.defaultClipSeconds) : null;
-  const clip = baseClip && announcer && announcerReady ? fitAnnouncer(baseClip, batter.announcerDelay ?? DEFAULT_ANNOUNCER_DELAY, announcer.duration) : baseClip;
+  const clip = baseClip && announcer && announcerReady ? fitAnnouncer(baseClip, announcerDelayFor(batter, team.settings), announcer.duration, 0.5 + team.settings.fadeOutSeconds) : baseClip;
   const mine = audio.track?.kind === 'walkup' && audio.track.ref === batter.id;
   const status = mine ? audio.status : 'idle';
   const walkUpActive = audio.track?.kind === 'walkup';

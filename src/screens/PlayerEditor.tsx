@@ -5,7 +5,7 @@ import { spotifyOpenUrl } from '../core/songs';
 import { createPlayer } from '../core/teams';
 import { playback, store } from '../state/app';
 import { walkUpRequest } from '../state/gameActions';
-import { DEFAULT_ANNOUNCER_DELAY, MAX_CLIP_SECONDS } from '../core/types';
+import { MAX_CLIP_SECONDS } from '../core/types';
 import { useActiveTeam, usePlayback, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Banner, Screen, Section, useConfirm } from '../components/ui';
@@ -44,7 +44,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         ? 'End must be after start.'
         : null;
   const announcer = songs.find((s) => s.id === announcerId);
-  const delaySec = delay.trim() ? Number(delay) : DEFAULT_ANNOUNCER_DELAY;
+  const delaySec = delay.trim() ? Number(delay) : team.settings.announcerDelay;
   const delayError = !Number.isFinite(delaySec) || delaySec < 0 ? 'Enter a number of seconds, like 2.' : null;
   const dirtyName = !name.trim();
 
@@ -178,8 +178,8 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
         </button>
         {announcer && (
           <>
-            <label className="label" htmlFor="adelay">Announcer starts (seconds after the music starts)</label>
-            <input id="adelay" className="field mono" value={delay} onChange={(e) => setDelay(e.target.value)} inputMode="decimal" placeholder={String(DEFAULT_ANNOUNCER_DELAY)} />
+            <label className="label" htmlFor="adelay">Announcer starts (seconds after the music starts; blank = team setting)</label>
+            <input id="adelay" className="field mono" value={delay} onChange={(e) => setDelay(e.target.value)} inputMode="decimal" placeholder={String(team.settings.announcerDelay)} />
             {delayError && <p className="error-text">{delayError}</p>}
             {stretched && clip && <p className="hint">The announcement is longer than the clip, so the clip will run {Math.round(clip.duration)} seconds.</p>}
             <button className="btn-text" onClick={() => setAnnouncerId(null)}>Remove announcer</button>

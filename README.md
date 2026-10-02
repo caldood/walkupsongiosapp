@@ -98,7 +98,7 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
-Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts (seconds after the music; default 3). Both play at the same
+Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts: Settings → *Announcer comes in after* (3, 4 or 5 seconds for the whole team), or a custom number in a player's editor. Both play at the same
 time; the announcer is boosted (Settings → *Announcer volume*, default Loud) and the music dips while they talk
 (*Music level while the announcer speaks*), rising back afterwards. A limiter on the output keeps the boosted voice from distorting. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
 
@@ -164,7 +164,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 109 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 111 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

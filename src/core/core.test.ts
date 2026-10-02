@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addToOrder, benchPlayers, clampIndex, currentBatter, lineup, moveInOrder, nextIndex, prevIndex, reconcileOrder, upNext } from './battingOrder';
-import { describeClip, fitAnnouncer, resolveClip } from './clip';
+import { announcerDelayFor, describeClip, fitAnnouncer, resolveClip } from './clip';
 import { formatTime, parseTime } from './format';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from './game';
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
@@ -358,5 +358,21 @@ describe('announcer volume setting', () => {
     const wild = JSON.parse(serializeTeam(t, []));
     wild.team.settings.announcerVolume = 999;
     expect(parseTeamExport(JSON.stringify(wild)).team.settings.announcerVolume).toBe(6);
+  });
+});
+
+describe('announcer delay setting', () => {
+  it('uses the player\'s own delay, otherwise the team setting', () => {
+    expect(announcerDelayFor({ announcerDelay: 4 }, { announcerDelay: 5 })).toBe(4);
+    expect(announcerDelayFor({}, { announcerDelay: 5 })).toBe(5);
+    expect(announcerDelayFor({ announcerDelay: 0 }, { announcerDelay: 5 })).toBe(0); // 0 is a real choice
+  });
+  it('defaults to 3s, is added to old teams, and survives export / import', () => {
+    expect(DEFAULT_TEAM_SETTINGS.announcerDelay).toBe(3);
+    const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 10 } } as unknown as Team;
+    expect(normalizeTeam(old).settings.announcerDelay).toBe(3);
+    const t = createTeam('T');
+    t.settings.announcerDelay = 5;
+    expect(parseTeamExport(serializeTeam(t, [])).team.settings.announcerDelay).toBe(5);
   });
 });

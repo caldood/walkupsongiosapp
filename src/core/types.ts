@@ -55,6 +55,8 @@ export interface TeamSettings {
   announcerDuck: number;
   /** Gain applied to the announcer recording (1 = as recorded, 2.5 = about +8 dB). */
   announcerVolume: number;
+  /** Seconds after the music starts when the announcer comes in (a player can override it). */
+  announcerDelay: number;
   /** Seconds of fade-out at the end of a walk-up clip. 0 = hard cut. */
   fadeOutSeconds: number;
 }
@@ -93,10 +95,12 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   autoPlayNext: false,
   announcerDuck: 0.35,
   announcerVolume: 2.5,
+  announcerDelay: 3,
   fadeOutSeconds: 2,
 };
 
 export const DEFAULT_ANNOUNCER_DELAY = 3;
+export const ANNOUNCER_DELAY_CHOICES = [3, 4, 5] as const;
 
 export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: true, activeTeamId: null };
 

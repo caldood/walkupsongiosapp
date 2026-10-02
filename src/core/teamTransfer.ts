@@ -75,6 +75,7 @@ export function parseTeamExport(text: string): TeamExport {
       autoAdvance: bool(s.autoAdvance, DEFAULT_TEAM_SETTINGS.autoAdvance),
       autoPlayNext: bool(s.autoPlayNext, DEFAULT_TEAM_SETTINGS.autoPlayNext),
       fadeOutSeconds: Math.min(10, Math.max(0, num(s.fadeOutSeconds, DEFAULT_TEAM_SETTINGS.fadeOutSeconds))),
+      announcerDelay: Math.min(10, Math.max(0, num(s.announcerDelay, DEFAULT_TEAM_SETTINGS.announcerDelay))),
       announcerVolume: Math.min(6, Math.max(0.5, num(s.announcerVolume, DEFAULT_TEAM_SETTINGS.announcerVolume))),
       announcerDuck: Math.min(1, Math.max(0, num(s.announcerDuck, DEFAULT_TEAM_SETTINGS.announcerDuck))),
     },

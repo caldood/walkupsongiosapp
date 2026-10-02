@@ -1,6 +1,6 @@
 import { currentBatter, lineup } from '../core/battingOrder';
-import { fitAnnouncer, resolveClip } from '../core/clip';
-import { DEFAULT_ANNOUNCER_DELAY, type Player, type Team } from '../core/types';
+import { announcerDelayFor, fitAnnouncer, resolveClip } from '../core/clip';
+import type { Player, Team } from '../core/types';
 import { audioManager, playback, store } from './app';
 import type { WalkUpRequest } from './playback';
 
@@ -19,7 +19,7 @@ export function walkUpRequest(
   let clip = resolveClip(player, song, team.settings.defaultClipSeconds);
   const announcer = store.song(player.announcerSongId);
   const hasAnnouncer = !!announcer && announcer.sourceType === 'local';
-  const delay = player.announcerDelay ?? DEFAULT_ANNOUNCER_DELAY;
+  const delay = announcerDelayFor(player, team.settings);
   // Never cut the announcement off: stretch the clip if the announcer would outlast it.
   const fadeOut = team.settings.fadeOutSeconds ?? 0;
   // …and leave the fade-out room after it, so the name is spoken at full volume.

@@ -1,4 +1,4 @@
-import { CLIP_DURATION_CHOICES, MAX_CLIP_SECONDS } from '../core/types';
+import { ANNOUNCER_DELAY_CHOICES, CLIP_DURATION_CHOICES, MAX_CLIP_SECONDS } from '../core/types';
 import { store } from '../state/app';
 import { useActiveTeam } from '../state/hooks';
 import { Segmented, Toggle } from './ui';
@@ -30,6 +30,16 @@ export function TeamSettingsForm() {
           onChange={(v) => store.updateTeamSettings({ fadeOutSeconds: v })}
         />
         <span className="row-sub">The music eases out instead of cutting off.</span>
+      </div>
+      <div className="row stacked">
+        <span className="row-title">Announcer comes in after</span>
+        <Segmented
+          label="Announcer starts"
+          value={s.announcerDelay}
+          options={[...new Set<number>([...ANNOUNCER_DELAY_CHOICES, s.announcerDelay])].sort((a, b) => a - b).map((v) => ({ value: v, label: `${v}s` }))}
+          onChange={(v) => store.updateTeamSettings({ announcerDelay: v })}
+        />
+        <span className="row-sub">How long the music plays alone before the voice starts. A player can override this in their editor.</span>
       </div>
       <div className="row stacked">
         <span className="row-title">Announcer volume</span>
