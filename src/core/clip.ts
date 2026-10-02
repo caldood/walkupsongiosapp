@@ -1,4 +1,4 @@
-import type { Player, Song, TeamSettings } from './types';
+import { MAX_CLIP_SECONDS, type Player, type Song, type TeamSettings } from './types';
 
 export interface Clip {
   start: number;
@@ -12,7 +12,8 @@ export const MIN_CLIP_SECONDS = 1;
 /**
  * Works out the exact portion of a song to play for a batter.
  * - start: the player's clipStart (>= 0)
- * - end: the player's clipEnd if it is after the start, otherwise start + default duration
+ * - end: the player's clipEnd if it is after the start, otherwise start + default duration; never more than
+ *   MAX_CLIP_SECONDS (15) after the start
  * - clamped to the song's real duration when known; never shorter than MIN_CLIP_SECONDS
  *   unless the song itself is shorter.
  */
@@ -27,6 +28,7 @@ export function resolveClip(
 
   let end = player.clipEnd != null && player.clipEnd > start ? player.clipEnd : start + defaultSeconds;
   if (end - start < MIN_CLIP_SECONDS) end = start + MIN_CLIP_SECONDS;
+  end = Math.min(end, start + MAX_CLIP_SECONDS); // walk-ups are capped
   if (total !== undefined) end = Math.min(end, total);
   return { start, end, duration: Math.max(0, end - start) };
 }
@@ -43,7 +45,7 @@ export function describeClip(clip: Clip, fmt: (s: number) => string): string {
  */
 export function fitAnnouncer(clip: Clip, delay: number, announcerSeconds: number | undefined, tail = 0.75): Clip {
   if (!announcerSeconds || announcerSeconds <= 0) return clip;
-  const needed = Math.max(0, delay) + announcerSeconds + tail;
+  const needed = Math.min(MAX_CLIP_SECONDS, Math.max(0, delay) + announcerSeconds + tail);
   if (clip.duration >= needed) return clip;
   return { start: clip.start, end: clip.start + needed, duration: needed };
 }

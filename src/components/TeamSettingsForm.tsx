@@ -1,4 +1,4 @@
-import { CLIP_DURATION_CHOICES } from '../core/types';
+import { CLIP_DURATION_CHOICES, MAX_CLIP_SECONDS } from '../core/types';
 import { store } from '../state/app';
 import { useActiveTeam } from '../state/hooks';
 import { Segmented, Toggle } from './ui';
@@ -14,7 +14,7 @@ export function TeamSettingsForm() {
       <div className="row stacked">
         <span className="row-title">Default walk-up length</span>
         <Segmented label="Default walk-up length" value={s.defaultClipSeconds} options={options} onChange={(v) => store.updateTeamSettings({ defaultClipSeconds: v })} />
-        <span className="row-sub">Used when a player has no custom end time.</span>
+        <span className="row-sub">Used when a player has no custom end time. Walk-ups are capped at {MAX_CLIP_SECONDS} seconds.</span>
       </div>
       <div className="row stacked">
         <span className="row-title">Fade out at the end of a walk-up</span>

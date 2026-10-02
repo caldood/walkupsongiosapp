@@ -2,7 +2,7 @@ import { reconcileOrder } from './battingOrder';
 import type { IdGenerator } from './ids';
 import { newId } from './ids';
 import { songIdsUsedBy } from './songs';
-import { DEFAULT_TEAM_SETTINGS, type Player, type Song, type Team } from './types';
+import { DEFAULT_TEAM_SETTINGS, MAX_CLIP_SECONDS, type Player, type Song, type Team } from './types';
 
 export const EXPORT_FORMAT = 'game-day-music/team';
 export const EXPORT_VERSION = 1;
@@ -71,7 +71,7 @@ export function parseTeamExport(text: string): TeamExport {
     })),
     battingOrder: Array.isArray(t.battingOrder) ? t.battingOrder.filter((x): x is string => typeof x === 'string') : [],
     settings: {
-      defaultClipSeconds: Math.max(1, num(s.defaultClipSeconds, DEFAULT_TEAM_SETTINGS.defaultClipSeconds)),
+      defaultClipSeconds: Math.min(MAX_CLIP_SECONDS, Math.max(1, num(s.defaultClipSeconds, DEFAULT_TEAM_SETTINGS.defaultClipSeconds))),
       autoAdvance: bool(s.autoAdvance, DEFAULT_TEAM_SETTINGS.autoAdvance),
       autoPlayNext: bool(s.autoPlayNext, DEFAULT_TEAM_SETTINGS.autoPlayNext),
       fadeOutSeconds: Math.min(10, Math.max(0, num(s.fadeOutSeconds, DEFAULT_TEAM_SETTINGS.fadeOutSeconds))),

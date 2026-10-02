@@ -98,13 +98,18 @@ describe('clip timing', () => {
     expect(resolveClip({ clipStart: 42, clipEnd: null }, undefined, 15)).toEqual({ start: 42, end: 57, duration: 15 });
   });
   it('honours an explicit end', () => {
-    expect(resolveClip({ clipStart: 42, clipEnd: 62 }, { duration: 200 }, 15)).toEqual({ start: 42, end: 62, duration: 20 });
+    expect(resolveClip({ clipStart: 42, clipEnd: 52 }, { duration: 200 }, 15)).toEqual({ start: 42, end: 52, duration: 10 });
   });
   it('ignores an end before the start', () => {
     expect(resolveClip({ clipStart: 30, clipEnd: 10 }, undefined, 10).end).toBe(40);
   });
+  it('never runs longer than 15 seconds, however it was set', () => {
+    expect(resolveClip({ clipStart: 42, clipEnd: 62 }, { duration: 200 }, 15)).toEqual({ start: 42, end: 57, duration: 15 });
+    expect(resolveClip({ clipStart: 0, clipEnd: null }, undefined, 30).duration).toBe(15);
+    expect(resolveClip({ clipStart: 5, clipEnd: 500 }, { duration: 600 }, 10).end).toBe(20);
+  });
   it('clamps to the song length', () => {
-    expect(resolveClip({ clipStart: 0, clipEnd: 999 }, { duration: 100 }, 15).end).toBe(100);
+    expect(resolveClip({ clipStart: 0, clipEnd: 999 }, { duration: 8 }, 15).end).toBe(8);
     const near = resolveClip({ clipStart: 99, clipEnd: null }, { duration: 100 }, 15);
     expect(near.start).toBe(99);
     expect(near.end).toBe(100);
@@ -208,7 +213,7 @@ describe('import / export', () => {
     t = assignWalkUp(t, t.players[0].id, song.id);
     t = assignWalkUp(t, t.players[1].id, spot.id);
     t = { ...t, players: t.players.map((p, i) => (i === 0 ? { ...p, clipStart: 42, clipEnd: 62 } : p)) };
-    t = { ...t, settings: { ...t.settings, defaultClipSeconds: 20, autoAdvance: true } };
+    t = { ...t, settings: { ...t.settings, defaultClipSeconds: 10, autoAdvance: true } };
     return { t, song, spot };
   }
 
@@ -226,7 +231,7 @@ describe('import / export', () => {
     const result = prepareImport(parseTeamExport(text), [], new Set(), seqId());
     expect(result.team.id).not.toBe(t.id);
     expect(result.team.name).toBe('Del Mar');
-    expect(result.team.settings).toMatchObject({ defaultClipSeconds: 20, autoAdvance: true });
+    expect(result.team.settings).toMatchObject({ defaultClipSeconds: 10, autoAdvance: true });
     const [brevan, luke] = lineup(result.team);
     expect(brevan).toMatchObject({ name: 'Brevan', number: '7', clipStart: 42, clipEnd: 62 });
     expect(luke.name).toBe('Luke');
@@ -279,6 +284,7 @@ describe('announcer', () => {
     const clip = { start: 40, end: 50, duration: 10 };
     expect(fitAnnouncer(clip, 2, 3)).toBe(clip); // 2 + 3 + 0.75 fits in 10s
     expect(fitAnnouncer(clip, 8, 4)).toEqual({ start: 40, end: 52.75, duration: 12.75 });
+    expect(fitAnnouncer(clip, 8, 20).duration).toBe(15); // the 15s cap wins
     expect(fitAnnouncer(clip, 2, undefined)).toBe(clip);
   });
 
@@ -310,9 +316,9 @@ describe('announcer', () => {
 
 describe('normalizeTeam (settings migration)', () => {
   it('gives teams saved before newer settings existed the defaults, so fade-out is on', () => {
-    const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 20, autoAdvance: true, autoPlayNext: false } } as unknown as Team;
+    const old = { ...createTeam('Old'), settings: { defaultClipSeconds: 10, autoAdvance: true, autoPlayNext: false } } as unknown as Team;
     const t = normalizeTeam(old);
-    expect(t.settings).toMatchObject({ defaultClipSeconds: 20, autoAdvance: true, fadeOutSeconds: 2, announcerDuck: 0.35 });
+    expect(t.settings).toMatchObject({ defaultClipSeconds: 10, autoAdvance: true, fadeOutSeconds: 2, announcerDuck: 0.35 });
   });
   it('drops retired defense fields and keeps valid saved values', () => {
     const legacy = { ...createTeam('L'), defensePlaylists: [{ id: 'p' }], activeDefensePlaylistId: 'p', settings: { ...createTeam('x').settings, fadeOutSeconds: 0, defenseShuffle: true } } as unknown as Team;
@@ -321,6 +327,10 @@ describe('normalizeTeam (settings migration)', () => {
     expect(t.activeDefensePlaylistId).toBeUndefined();
     expect((t.settings as Record<string, unknown>).fadeOutSeconds).toBe(0); // an explicit "Off" is respected
     expect((t.settings as Record<string, unknown>).defenseShuffle).toBeUndefined();
+  });
+  it('caps an old default length that is over 15 seconds', () => {
+    const long = { ...createTeam('Long'), settings: { defaultClipSeconds: 30 } } as unknown as Team;
+    expect(normalizeTeam(long).settings.defaultClipSeconds).toBe(15);
   });
   it('ignores garbage values', () => {
     const bad = { ...createTeam('B'), settings: { fadeOutSeconds: 'x', announcerDuck: NaN } } as unknown as Team;

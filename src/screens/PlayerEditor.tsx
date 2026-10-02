@@ -5,7 +5,7 @@ import { spotifyOpenUrl } from '../core/songs';
 import { createPlayer } from '../core/teams';
 import { playback, store } from '../state/app';
 import { walkUpRequest } from '../state/gameActions';
-import { DEFAULT_ANNOUNCER_DELAY } from '../core/types';
+import { DEFAULT_ANNOUNCER_DELAY, MAX_CLIP_SECONDS } from '../core/types';
 import { useActiveTeam, usePlayback, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Banner, Screen, Section, useConfirm } from '../components/ui';
@@ -95,6 +95,7 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
   const draft = createPlayer({ name, clipStart: startSec ?? 0, clipEnd: endSec });
   const baseClip = song ? resolveClip(draft, song, team.settings.defaultClipSeconds) : null;
   const clip = baseClip && announcer ? fitAnnouncer(baseClip, delaySec, announcer.duration) : baseClip;
+  const overCap = !timeError && endSec != null && startSec != null && endSec - startSec > MAX_CLIP_SECONDS;
   const stretched = !!baseClip && !!clip && clip.duration > baseClip.duration + 0.01;
   const spotify = song?.sourceType === 'spotify' ? spotifyOpenUrl(song) : null;
 
@@ -199,7 +200,12 @@ export function PlayerEditor({ playerId }: { playerId?: string }) {
               <input id="cend" className="field mono" value={end} onChange={(e) => setEnd(e.target.value)} inputMode="decimal" placeholder={`auto`} />
             </div>
           </div>
-          {timeError ? <p className="error-text">{timeError}</p> : clip && <p className="hint">Plays {formatTime(clip.start)}–{formatTime(clip.end)} ({Math.round(clip.duration)} seconds).</p>}
+          {timeError ? <p className="error-text">{timeError}</p> : clip && (
+              <p className="hint">
+                Plays {formatTime(clip.start)}–{formatTime(clip.end)} ({Math.round(clip.duration)} seconds).
+                {overCap && ` Walk-ups are limited to ${MAX_CLIP_SECONDS} seconds, so it stops there.`}
+              </p>
+            )}
           <button className={`btn wide ${testing ? 'btn-stop' : 'btn-primary'}`} onClick={() => (testing ? playback.stopAll() : test())} disabled={!!timeError}>
             <Icon name={testing ? 'stop' : 'play'} size={18} /> {testing ? 'Stop test' : 'Test this clip'}
           </button>

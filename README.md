@@ -68,7 +68,9 @@ static host (Netlify, Cloudflare Pages, S3, a plain folder) with no configuratio
    Play/Pause/Stop stay live. Unlock by holding the button.
 5. Inning (▲ TOP 1) is a manual indicator; the app never guesses outs.
 
-Settings include: default walk-up length (10/15/20/30s, per-player override), **Auto advance** (moves the lineup to the
+Walk-up clips are **capped at 15 seconds** (a longer end time is cut to 15 s after the start; older saved defaults above 15 s are lowered).
+
+Settings include: default walk-up length (5/10/15s, per-player override), **Auto advance** (moves the lineup to the
 next batter after a walk-up finishes), **Auto play next batter** (off by default, requires Auto advance), shuffle/repeat
 theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 
@@ -162,7 +164,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 104 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 106 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).
