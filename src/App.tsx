@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { bindMediaSession, updateMediaSession } from './audio/platform';
 import { audioManager, backend, mixer, playback, store } from './state/app';
 import { installAutoAdvance, preloadBatters } from './state/gameActions';
@@ -42,6 +42,12 @@ function Router() {
 
 export function App() {
   const { ready, settings, teams, audioIds } = useAppState();
+  const [updateReady, setUpdateReady] = useState(false);
+  useEffect(() => {
+    const on = () => setUpdateReady(true);
+    window.addEventListener('gdm-update-ready', on);
+    return () => window.removeEventListener('gdm-update-ready', on);
+  }, []);
 
   useEffect(() => {
     void store.init();
@@ -77,6 +83,14 @@ export function App() {
   return (
     <NavProvider>
       <Router />
+      {updateReady && (
+        <div className="update-banner" role="status">
+          <span>A new version is ready.</span>
+          <button className="btn btn-small btn-primary" onClick={() => location.reload()}>
+            Reload
+          </button>
+        </div>
+      )}
     </NavProvider>
   );
 }

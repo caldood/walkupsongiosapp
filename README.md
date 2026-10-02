@@ -107,6 +107,12 @@ How it works: the music still streams from the single `<audio>` element but is r
 `AudioBuffer` ahead of time and started on the Web Audio clock. The routing is only set up once a player with an
 announcer is used. If an announcer file is missing the music plays alone and the screen says so.
 
+## Updates
+
+The app caches itself for offline use. Page loads try the network first (falling back to the cache after 3 s on a bad signal), and
+when a new version finishes downloading in the background a **“A new version is ready — Reload”** bar appears. If you ever don't see a
+new feature, tap Reload (or close and reopen the app).
+
 ## QA export of the mixed walk-up
 
 In the player editor, **QA export → Export mixed audio (WAV)** renders the finished walk-up — music clip, fade-out and the

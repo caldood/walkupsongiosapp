@@ -440,3 +440,6 @@ textarea.field { font-size: 15px; font-family: var(--mono); }
 .mixcard dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
 .mixcard dt { color: var(--muted); font-weight: 600; }
 .mixcard dd { margin: 0; overflow-wrap: anywhere; font-family: var(--mono); font-size: 13px; }
+
+/* "New version ready" prompt */
+.update-banner { position: fixed; z-index: 60; left: 12px; right: 12px; top: calc(10px + var(--safe-t)); max-width: 600px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px 10px 16px; border-radius: 16px; background: var(--panel-2); border: 1px solid var(--amber); box-shadow: var(--shadow); font-weight: 650; }
