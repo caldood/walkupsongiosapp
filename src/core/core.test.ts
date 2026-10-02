@@ -6,7 +6,7 @@ import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGam
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
 import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, normalizeTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
-import type { GameState, Team } from './types';
+import { DEFAULT_ANNOUNCER_DELAY, type GameState, type Team } from './types';
 
 const seqId = () => {
   let n = 0;
@@ -335,5 +335,11 @@ describe('normalizeTeam (settings migration)', () => {
   it('ignores garbage values', () => {
     const bad = { ...createTeam('B'), settings: { fadeOutSeconds: 'x', announcerDuck: NaN } } as unknown as Team;
     expect(normalizeTeam(bad).settings).toMatchObject({ fadeOutSeconds: 2, announcerDuck: 0.35 });
+  });
+});
+
+describe('announcer default delay', () => {
+  it('starts 3 seconds into the clip unless the player sets their own', () => {
+    expect(DEFAULT_ANNOUNCER_DELAY).toBe(3);
   });
 });

@@ -98,7 +98,7 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).
-Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts (seconds after the music). Both play at the same
+Add recordings with **Songs → Add announcer recordings** (they're kept apart from your music), then pick one in the player editor and set when it starts (seconds after the music; default 3). Both play at the same
 time; the music dips while the announcer talks (Settings → *Music level while the announcer speaks*) and rises back
 afterwards. If the announcer would outlast the clip, the clip is stretched so the name is never cut off.
 

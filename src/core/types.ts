@@ -93,7 +93,7 @@ export const DEFAULT_TEAM_SETTINGS: TeamSettings = {
   fadeOutSeconds: 2,
 };
 
-export const DEFAULT_ANNOUNCER_DELAY = 2;
+export const DEFAULT_ANNOUNCER_DELAY = 3;
 
 export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: true, activeTeamId: null };
 
