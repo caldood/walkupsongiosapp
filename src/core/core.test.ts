@@ -6,7 +6,7 @@ import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGam
 import { findMissingSongs, isPlayable, matchFilesToSongs, songIdsUsedBy, spotifyOpenUrl, createLocalSong, createSpotifySong } from './songs';
 import { addPlayer, assignWalkUp, createPlayer, createTeam, detachSong, duplicateTeam, normalizeTeam, removePlayer } from './teams';
 import { ImportError, exportTeam, parseTeamExport, prepareImport, serializeTeam } from './teamTransfer';
-import { DEFAULT_ANNOUNCER_DELAY, DEFAULT_TEAM_SETTINGS, type GameState, type Team } from './types';
+import { CLIP_DURATION_CHOICES, DEFAULT_ANNOUNCER_DELAY, DEFAULT_TEAM_SETTINGS, MAX_CLIP_SECONDS, type GameState, type Team } from './types';
 
 const seqId = () => {
   let n = 0;
@@ -380,5 +380,13 @@ describe('announcer delay setting', () => {
     const t = createTeam('T');
     t.settings.announcerDelay = 5;
     expect(parseTeamExport(serializeTeam(t, [])).team.settings.announcerDelay).toBe(5);
+  });
+});
+
+describe('default walk-up length choices', () => {
+  it('offers 12 seconds and never more than the 15s cap', () => {
+    expect([...CLIP_DURATION_CHOICES]).toEqual([5, 10, 12, 15]);
+    expect(Math.max(...CLIP_DURATION_CHOICES)).toBeLessThanOrEqual(MAX_CLIP_SECONDS);
+    expect(resolveClip({ clipStart: 0, clipEnd: null }, undefined, 12).duration).toBe(12);
   });
 });

@@ -108,4 +108,4 @@ export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: tru
 
 /** Walk-up clips never run longer than this, whatever start/end or default length is set. */
 export const MAX_CLIP_SECONDS = 15;
-export const CLIP_DURATION_CHOICES = [5, 10, 15] as const;
+export const CLIP_DURATION_CHOICES = [5, 10, 12, 15] as const;
