@@ -32,7 +32,11 @@ describe('AppStore', () => {
     expect(lineup(store.activeTeam!).map((p) => p.name)).toEqual(['Luke', 'Jack', 'Brevan']);
     store.setInLineup(store.activeTeam!.players[0].id, false); // bench Jack
     expect(lineup(store.activeTeam!).map((p) => p.name)).toEqual(['Luke', 'Brevan']);
-    expect(repo.teams.get(store.activeTeam!.id)?.battingOrder).toHaveLength(2); // persisted
+    const saved = repo.teams.get(store.activeTeam!.id)!;
+    expect(saved.battingOrder).toHaveLength(3); // the benched player keeps their slot…
+    expect(saved.players.filter((p) => p.benched)).toHaveLength(1); // …and is persisted as benched
+    store.setInLineup(store.activeTeam!.players[0].id, true);
+    expect(lineup(store.activeTeam!).map((p) => p.name)).toEqual(['Luke', 'Jack', 'Brevan']); // Jack returns to his slot (2nd), not the bottom
   });
 
   it('moves through the batting order and wraps; reset restores the start', async () => {

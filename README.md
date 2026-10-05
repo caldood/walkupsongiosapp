@@ -88,6 +88,14 @@ theme (dark / light-for-sunshine), keep-awake, and a confirmed **RESET GAME**.
 * **Whole-song fade:** if a clip plays through to the very end of the song (or the end time is past the song's end),
   it still fades out over the last seconds. Teams saved by older versions are upgraded on load so they get the fade too.
 
+## Who's here today (bench)
+
+Not everyone is at every game. **Players → Who's here today?** (also in Game setup and at the bottom of the Game Mode list) lists the
+whole roster with a switch per player. Players switched off sit on the **bench**: they're skipped by Next/Previous batter and don't
+appear in the Game Mode list, but they **keep their place in the batting order**, so switching them back on (or tapping **Back in**)
+returns them to their old spot — handy for late arrivals. You can also tap **Bench** on any row. The bench is saved with the team and
+is included in export/import and Duplicate team.
+
 ## Speed-ups
 
 * **Paste a list of players** (Players screen): one per line, number first or last (“7 Brevan Sun”, “Luke 3”). **Save & add another** in the player editor for one-by-one entry.
@@ -179,7 +187,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 120 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 126 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addToOrder, benchPlayers, clampIndex, currentBatter, lineup, moveInOrder, nextIndex, prevIndex, reconcileOrder, upNext } from './battingOrder';
+import { addToOrder, benchPlayers, clampIndex, currentBatter, lineup, moveInOrder, nextIndex, prevIndex, reconcileOrder, reorderLineup, setAllPresent, setPresent, upNext } from './battingOrder';
 import { announcerDelayFor, describeClip, fitAnnouncer, resolveClip } from './clip';
 import { formatTime, parseTime } from './format';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from './game';
@@ -388,5 +388,61 @@ describe('default walk-up length choices', () => {
     expect([...CLIP_DURATION_CHOICES]).toEqual([5, 10, 12, 15]);
     expect(Math.max(...CLIP_DURATION_CHOICES)).toBeLessThanOrEqual(MAX_CLIP_SECONDS);
     expect(resolveClip({ clipStart: 0, clipEnd: null }, undefined, 12).duration).toBe(12);
+  });
+});
+
+describe('bench / who is here today', () => {
+  it('benching skips a player but keeps their slot; putting them back restores it', () => {
+    let t = sampleTeam(); // Jack, Brevan, Luke, Ethan
+    const luke = t.players[2].id;
+    t = setPresent(t, luke, false);
+    expect(lineup(t).map((p) => p.name)).toEqual(['Jack', 'Brevan', 'Ethan']);
+    expect(benchPlayers(t).map((p) => p.name)).toEqual(['Luke']);
+    expect(t.battingOrder).toHaveLength(4); // slot kept
+    t = setPresent(t, luke, true);
+    expect(lineup(t).map((p) => p.name)).toEqual(['Jack', 'Brevan', 'Luke', 'Ethan']); // back in place, not at the bottom
+    expect(benchPlayers(t)).toEqual([]);
+  });
+  it('a player who was never in the order is added at the bottom when marked present', () => {
+    const base = sampleTeam();
+    const t = { ...base, battingOrder: base.battingOrder.slice(0, 2) };
+    expect(benchPlayers(t).map((p) => p.name)).toEqual(['Luke', 'Ethan']);
+    expect(lineup(setPresent(t, t.players[3].id, true)).map((p) => p.name)).toEqual(['Jack', 'Brevan', 'Ethan']);
+  });
+  it('Game Mode skips benched batters (next / previous / up next)', () => {
+    let t = sampleTeam();
+    t = setPresent(t, t.players[1].id, false); // Brevan out
+    let g = initialGame(t.id);
+    g = advanceBatter(g, t);
+    expect(currentBatter(t, g.batterIndex)?.name).toBe('Luke');
+    expect(upNext(t, 0, 5).map((p) => p.name)).toEqual(['Luke', 'Ethan']);
+    expect(previousBatter(advanceBatter(advanceBatter(g, t), t), t).batterIndex).toBe(2);
+  });
+  it('dragging in the visible lineup reorders correctly around benched players', () => {
+    let t = sampleTeam(); // Jack, Brevan, Luke, Ethan
+    t = setPresent(t, t.players[1].id, false); // bench Brevan (between Jack and Luke)
+    // visible: Jack, Luke, Ethan → drag Ethan to the top
+    const order = reorderLineup(t, 2, 0);
+    const reordered = { ...t, battingOrder: order };
+    expect(lineup(reordered).map((p) => p.name)).toEqual(['Ethan', 'Jack', 'Luke']);
+    expect(setPresent(reordered, t.players[1].id, true).battingOrder).toHaveLength(4);
+    // drag Jack below Luke
+    expect(lineup({ ...t, battingOrder: reorderLineup(t, 0, 1) }).map((p) => p.name)).toEqual(['Luke', 'Jack', 'Ethan']);
+    // out-of-range drags are harmless
+    expect(reorderLineup(t, 9, 0)).toEqual(t.battingOrder);
+  });
+  it('everyone present clears the bench', () => {
+    let t = sampleTeam();
+    t = setPresent(t, t.players[0].id, false);
+    t = setPresent(t, t.players[3].id, false);
+    expect(lineup(setAllPresent(t))).toHaveLength(4);
+  });
+  it('benched players stay benched through export / import and duplicate', () => {
+    let t = sampleTeam();
+    t = setPresent(t, t.players[2].id, false);
+    const imported = prepareImport(parseTeamExport(serializeTeam(t, [])), [], new Set(), seqId()).team;
+    expect(lineup(imported).map((p) => p.name)).toEqual(['Jack', 'Brevan', 'Ethan']);
+    expect(benchPlayers(imported).map((p) => p.name)).toEqual(['Luke']);
+    expect(lineup(duplicateTeam(t)).map((p) => p.name)).toEqual(['Jack', 'Brevan', 'Ethan']);
   });
 });

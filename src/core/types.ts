@@ -35,6 +35,8 @@ export interface Player {
   /** Small data-URL avatar. */
   photo?: string;
   walkUpSongId?: ID | null;
+  /** Not batting today. A benched player keeps their slot in the batting order so they can be put back in place. */
+  benched?: boolean;
   /** Optional spoken announcement (a library song with role 'announcer') mixed over the walk-up music. */
   announcerSongId?: ID | null;
   /** Seconds after the clip starts when the announcement begins. */

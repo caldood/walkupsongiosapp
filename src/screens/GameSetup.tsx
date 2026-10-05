@@ -9,6 +9,7 @@ import { Screen, Section } from '../components/ui';
 import { MissingAudio } from '../components/MissingAudio';
 import { SongPicker } from '../components/SongPicker';
 import { SortableList } from '../components/SortableList';
+import { Attendance } from '../components/Attendance';
 import { Icon } from '../components/icons';
 
 const STEPS = ['Team', 'Batting order', 'Songs', 'Go!'];
@@ -30,6 +31,7 @@ export function GameSetup() {
     setStepState(n);
   };
   const [pickFor, setPickFor] = useState<string | null>(null);
+  const [attendance, setAttendance] = useState(false);
 
   const order = team ? lineup(team) : [];
   const canNext = step === 0 ? !!team : step === 1 ? order.length > 0 : true;
@@ -66,7 +68,11 @@ export function GameSetup() {
       )}
 
       {step === 1 && team && (
-        <Section hint="Drag ⠿ to reorder. Players who aren't here today can sit on the bench.">
+        <Section hint="Drag ⠿ to reorder. Bench anyone who isn't here today — they keep their spot in the order.">
+          <button className="btn btn-primary wide" onClick={() => setAttendance(true)}>
+            <Icon name="users" size={20} /> Who's here today? <span className="count-pill">{order.length} of {team.players.length} batting</span>
+          </button>
+          {attendance && <Attendance onClose={() => setAttendance(false)} />}
           <SortableList
             items={order}
             getKey={(p) => p.id}
@@ -77,14 +83,16 @@ export function GameSetup() {
                 {handle}
                 <span className="pos">{i + 1}</span>
                 <span className="grow row-title"><span className="num">#{p.number || '–'}</span> {p.name}</span>
-                <button className="btn-icon sm" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}><Icon name="x" size={18} /></button>
+                <button className="btn btn-small" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}>
+                  <Icon name="bench" size={18} /> Bench
+                </button>
               </>
             )}
           />
           {benchPlayers(team).map((p) => (
             <div key={p.id} className="row player-row muted-row">
               <span className="grow row-title"><span className="num">#{p.number || '–'}</span> {p.name} <span className="muted">(bench)</span></span>
-              <button className="btn btn-small" onClick={() => store.setInLineup(p.id, true)}>＋ Batting</button>
+              <button className="btn btn-small" onClick={() => store.setInLineup(p.id, true)}>Back in</button>
             </div>
           ))}
           <button className="btn wide" onClick={() => nav.go({ name: 'player-edit' })}>＋ Add player</button>

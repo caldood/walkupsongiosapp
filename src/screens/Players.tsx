@@ -7,6 +7,7 @@ import { useNav } from '../Nav';
 import { Icon } from '../components/icons';
 import { Avatar, EmptyState, Screen, Section } from '../components/ui';
 import { SortableList } from '../components/SortableList';
+import { Attendance } from '../components/Attendance';
 
 /** Roster + batting order. Simple up/down controls (big, reliable on touch). */
 export function Players() {
@@ -14,6 +15,7 @@ export function Players() {
   const { songs } = useAppState();
   const nav = useNav();
   const [pasting, setPasting] = useState(false);
+  const [attendance, setAttendance] = useState(false);
   const [pasted, setPasted] = useState('');
   if (!team) {
     return (
@@ -29,10 +31,13 @@ export function Players() {
   return (
     <Screen title="Players" right={<button className="btn-text strong" onClick={() => nav.go({ name: 'player-edit' })}><Icon name="plus" size={18} /> Add</button>}>
       <p className="team-label">{team.name}</p>
+      <button className="btn btn-primary wide" onClick={() => setAttendance(true)}>
+        <Icon name="users" size={20} /> Who's here today? <span className="count-pill">{order.length} of {team.players.length} batting</span>
+      </button>
       <button className="btn wide" onClick={() => setPasting(true)}>
         <Icon name="clipboard" size={20} /> Paste a list of players
       </button>
-      <Section title="Batting order" hint="Drag ⠿ to reorder. Tap a player to edit their song and clip.">
+      <Section title={`Batting today (${order.length})`} hint="Drag ⠿ to reorder. Tap a player to edit their song and clip. Bench anyone who isn't here — they keep their spot for next time.">
         {order.length === 0 && <p className="muted">No one in the batting order yet.</p>}
         <SortableList
           items={order}
@@ -50,15 +55,15 @@ export function Players() {
                 </span>
                 <span className="row-sub">{songName(p.walkUpSongId) ?? 'No song yet'}</span>
               </button>
-              <button className="btn-icon sm" onClick={() => store.setInLineup(p.id, false)} aria-label={`Move ${p.name} to bench`} title="Move to bench">
-                <Icon name="x" size={18} />
+              <button className="btn btn-small" onClick={() => store.setInLineup(p.id, false)} aria-label={`Bench ${p.name}`}>
+                <Icon name="bench" size={18} /> Bench
               </button>
             </>
           )}
         />
       </Section>
       {bench.length > 0 && (
-        <Section title="Bench" hint="Players not batting today. Tap + Batting to add them to the bottom of the order.">
+        <Section title={`Bench (${bench.length})`} hint="Not batting today. Tap Back in to return a player to their spot in the order.">
           <ul className="list">
             {bench.map((p) => (
               <li key={p.id} className="row player-row">
@@ -69,13 +74,14 @@ export function Players() {
                   <span className="row-sub">{songName(p.walkUpSongId) ?? 'No song yet'}</span>
                 </button>
                 <button className="btn btn-small" onClick={() => store.setInLineup(p.id, true)}>
-                  ＋ Batting
+                  Back in
                 </button>
               </li>
             ))}
           </ul>
         </Section>
       )}
+      {attendance && <Attendance onClose={() => setAttendance(false)} />}
       {pasting && (
         <div className="modal-backdrop sheet-backdrop" onClick={() => setPasting(false)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="Paste players" onClick={(e) => e.stopPropagation()}>

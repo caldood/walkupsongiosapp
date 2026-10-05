@@ -63,6 +63,7 @@ export function parseTeamExport(text: string): TeamExport {
       name: str(p.name, 'Player'),
       number: str(p.number),
       photo: typeof p.photo === 'string' ? p.photo : undefined,
+      benched: p.benched === true ? true : undefined,
       walkUpSongId: typeof p.walkUpSongId === 'string' ? p.walkUpSongId : null,
       announcerSongId: typeof p.announcerSongId === 'string' ? p.announcerSongId : null,
       announcerDelay: typeof p.announcerDelay === 'number' && Number.isFinite(p.announcerDelay) ? Math.max(0, p.announcerDelay) : undefined,

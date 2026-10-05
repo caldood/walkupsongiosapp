@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { describeAudioError } from '../audio/AudioManager';
 import { ACCEPTED_AUDIO } from '../audio/metadata';
-import { currentBatter, lineup } from '../core/battingOrder';
+import { benchPlayers, currentBatter, lineup } from '../core/battingOrder';
 import { announcerDelayFor, describeClip, fitAnnouncer, resolveClip } from '../core/clip';
 import { formatTime } from '../core/format';
 import { isPlayable, spotifyOpenUrl } from '../core/songs';
@@ -11,6 +11,7 @@ import { useActiveTeam, useAppState, usePlayback } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Icon } from '../components/icons';
 import { Avatar, Banner, EmptyState } from '../components/ui';
+import { Attendance } from '../components/Attendance';
 
 export function WalkUpMode({ locked }: { locked: boolean }) {
   const { game, audioIds } = useAppState();
@@ -19,6 +20,7 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
   const nav = useNav();
   const fileInput = useRef<HTMLInputElement>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [attendance, setAttendance] = useState(false);
 
   const batterId = team ? currentBatter(team, game.batterIndex)?.id : undefined;
   useEffect(() => {
@@ -30,10 +32,23 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
   const batters = lineup(team);
   const batter = currentBatter(team, game.batterIndex);
   if (!batter) {
+    const onBench = benchPlayers(team).length;
     return (
-      <EmptyState title="No batting order" action={<button className="btn btn-primary" onClick={() => nav.go({ name: 'players' })}>Add players</button>}>
-        Add players and put them in the batting order.
-      </EmptyState>
+      <>
+        <EmptyState
+          title={onBench > 0 ? 'Everyone is on the bench' : 'No batting order'}
+          action={
+            onBench > 0 ? (
+              <button className="btn btn-primary" onClick={() => setAttendance(true)}>Who's here today?</button>
+            ) : (
+              <button className="btn btn-primary" onClick={() => nav.go({ name: 'players' })}>Add players</button>
+            )
+          }
+        >
+          {onBench > 0 ? 'Switch on the players who are batting today.' : 'Add players and put them in the batting order.'}
+        </EmptyState>
+        {attendance && <Attendance onClose={() => setAttendance(false)} />}
+      </>
     );
   }
 
@@ -214,7 +229,11 @@ export function WalkUpMode({ locked }: { locked: boolean }) {
             );
           })}
         </ol>
+        <button className="btn wide bench-btn" disabled={locked} onClick={() => setAttendance(true)}>
+          <Icon name="users" size={20} /> Who's here? <span className="count-pill">{benchPlayers(team).length} on bench</span>
+        </button>
       </section>
+      {attendance && <Attendance onClose={() => setAttendance(false)} />}
     </div>
   );
 }

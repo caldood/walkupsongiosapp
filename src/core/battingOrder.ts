@@ -4,14 +4,43 @@ export function playerById(team: Team, id: ID | undefined | null): Player | unde
   return id ? team.players.find((p) => p.id === id) : undefined;
 }
 
-/** Batting order as Player objects, dropping any ids that no longer exist. */
+/** Who is batting today, in order: the batting order minus benched players (and ids that no longer exist). */
 export function lineup(team: Team): Player[] {
-  return team.battingOrder.map((id) => playerById(team, id)).filter((p): p is Player => !!p);
+  return team.battingOrder.map((id) => playerById(team, id)).filter((p): p is Player => !!p && !p.benched);
 }
 
+/** Players not batting today: benched ones, plus anyone who was never put in the order. */
 export function benchPlayers(team: Team): Player[] {
   const inOrder = new Set(team.battingOrder);
-  return team.players.filter((p) => !inOrder.has(p.id));
+  return team.players.filter((p) => p.benched || !inOrder.has(p.id));
+}
+
+/**
+ * Bench a player or put them back. A benched player stays in `battingOrder`, so bringing them back
+ * restores their old slot; a player who was never in the order is added at the bottom.
+ */
+export function setPresent(team: Team, playerId: ID, present: boolean): Team {
+  if (!team.players.some((p) => p.id === playerId)) return team;
+  const players = team.players.map((p) => (p.id === playerId ? { ...p, benched: !present } : p));
+  const battingOrder = present && !team.battingOrder.includes(playerId) ? [...team.battingOrder, playerId] : team.battingOrder;
+  return { ...team, players, battingOrder };
+}
+
+export function setAllPresent(team: Team): Team {
+  let t: Team = { ...team, players: team.players.map((p) => ({ ...p, benched: false })) };
+  for (const p of t.players) if (!t.battingOrder.includes(p.id)) t = { ...t, battingOrder: [...t.battingOrder, p.id] };
+  return t;
+}
+
+/**
+ * New `battingOrder` after dragging the batter at lineup position `from` to lineup position `to`.
+ * Positions refer to the visible lineup; benched players keep their place around it.
+ */
+export function reorderLineup(team: Team, from: number, to: number): ID[] {
+  const ids = lineup(team).map((p) => p.id);
+  if (from < 0 || from >= ids.length) return team.battingOrder;
+  const target = ids[Math.max(0, Math.min(ids.length - 1, to))];
+  return moveInOrder(team.battingOrder, team.battingOrder.indexOf(ids[from]), team.battingOrder.indexOf(target));
 }
 
 /** Removes stale ids and duplicates. */

@@ -1,5 +1,5 @@
 import { addPlayer, assignWalkUp, createPlayer, createTeam, normalizeTeam, detachSong, duplicateTeam, removePlayer, updatePlayer } from '../core/teams';
-import { clampIndex, lineup, moveInOrder, reconcileOrder } from '../core/battingOrder';
+import { clampIndex, lineup, reconcileOrder, reorderLineup, setAllPresent, setPresent } from '../core/battingOrder';
 import { advanceBatter, advanceHalfInning, initialGame, previousBatter, resetGame, retreatHalfInning, setBatter } from '../core/game';
 import { createLocalSong, createSpotifySong, findMissingSongs, matchFilesToSongs } from '../core/songs';
 import { ImportError, parseTeamExport, prepareImport, serializeTeam, type ImportResult } from '../core/teamTransfer';
@@ -193,21 +193,22 @@ export class AppStore {
     this.mutateActive((t) => ({ ...t, battingOrder: order }));
   }
 
-  /** Drag-and-drop: move the batter at `from` to position `to`. */
+  /** Drag-and-drop: move the batter at lineup position `from` to position `to`. */
   reorderBatter(from: number, to: number) {
-    this.mutateActive((t) => ({ ...t, battingOrder: moveInOrder(t.battingOrder, from, to) }));
+    this.mutateActive((t) => ({ ...t, battingOrder: reorderLineup(t, from, to) }));
   }
 
   moveBatter(index: number, delta: number) {
-    this.mutateActive((t) => ({ ...t, battingOrder: moveInOrder(t.battingOrder, index, index + delta) }));
+    this.reorderBatter(index, index + delta);
   }
 
-  /** Adds/removes a player from the batting order (bench ↔ lineup). */
+  /** Bench a player (not batting today) or put them back in their old slot. */
   setInLineup(playerId: string, inLineup: boolean) {
-    this.mutateActive((t) => {
-      const without = t.battingOrder.filter((x) => x !== playerId);
-      return { ...t, battingOrder: inLineup ? [...without, playerId] : without };
-    });
+    this.mutateActive((t) => setPresent(t, playerId, inLineup));
+  }
+
+  setEveryonePresent() {
+    this.mutateActive((t) => setAllPresent(t));
   }
 
   assignWalkUp(playerId: string, songId: string | null) {
