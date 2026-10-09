@@ -33,7 +33,7 @@ export function Home() {
   const tiles: { icon: IconName; label: string; go(): void }[] = [
     { icon: 'clipboard', label: 'Game setup', go: () => { restartSetupWizard(); nav.go({ name: 'setup' }); } },
     { icon: 'jersey', label: 'Players', go: () => nav.go({ name: 'players' }) },
-    { icon: 'music', label: 'Songs', go: () => nav.go({ name: 'songs' }) },
+    { icon: 'music', label: 'Songs & voices', go: () => nav.go({ name: 'songs' }) },
     { icon: 'users', label: 'Teams', go: () => nav.go({ name: 'teams' }) },
     { icon: 'box', label: 'Import / export', go: () => nav.go({ name: 'transfer' }) },
     { icon: 'sliders', label: 'Settings', go: () => nav.go({ name: 'settings' }) },

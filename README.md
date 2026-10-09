@@ -103,6 +103,12 @@ is included in export/import and Duplicate team.
 * **Getting ready checklist** on Home until team, songs, players and walk-up songs are all set.
 * **Keyboard (Mac):** Space play/pause · S or Esc stop · N or → next batter · P or ← previous batter.
 
+## Songs vs announcer voices
+
+**Songs & voices** (Home) has two clearly separate tabs: **Songs** (amber music-note icon) and **Voices** (blue microphone icon), each with its
+own counter, explanation, “Add” button, list and empty state; Spotify links (green icon) live under Songs. The song and announcer pickers in the
+player editor use the same icons and only show the matching kind.
+
 ## Announcer over walk-up music
 
 Each player can have a **music clip** *and* an **announcer recording** (e.g. “Now batting, number 7, Brevan Sun!”).

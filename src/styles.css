@@ -449,3 +449,37 @@ textarea.field { font-size: 15px; font-family: var(--mono); }
 .attend-row { display: flex; align-items: center; gap: 12px; }
 .attend-row .row { flex: 1; border: 0; background: none; box-shadow: none; padding: 0; min-height: 44px; }
 .bench-btn { margin-top: 10px; }
+
+/* ── Songs vs announcer voices ────────────────────────────────────────────── */
+:root { --voice: #5ab4ff; --voice-d: #1d5fa8; --note: var(--amber); }
+:root[data-theme='light'] { --voice: #1565c0; --voice-d: #1565c0; }
+
+.kind-icon { display: inline-grid; place-items: center; flex: none; border: 1px solid transparent; }
+.kind-icon.music { background: linear-gradient(160deg, rgba(255, 184, 28, 0.28), rgba(255, 184, 28, 0.08)); color: var(--amber-ink); border-color: rgba(255, 184, 28, 0.4); }
+.kind-icon.announcer { background: linear-gradient(160deg, rgba(90, 180, 255, 0.28), rgba(90, 180, 255, 0.08)); color: var(--voice); border-color: rgba(90, 180, 255, 0.45); }
+.kind-icon.spotify { background: linear-gradient(160deg, rgba(29, 185, 84, 0.3), rgba(29, 185, 84, 0.08)); color: #3fd97f; border-color: rgba(29, 185, 84, 0.45); }
+:root[data-theme='light'] .kind-icon.spotify { color: #107c36; }
+
+.kind-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
+.kind-tab { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; min-height: 66px; border-radius: 18px; background: var(--panel); border: 2px solid var(--line); box-shadow: inset 0 1px 0 var(--hi); }
+.kt-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.15; }
+.kt-text b { font-family: var(--display); font-size: 19px; letter-spacing: 0.05em; text-transform: uppercase; }
+.kt-text small { font-size: 13px; color: var(--muted); }
+.kind-tab.music.on { border-color: var(--amber); background: linear-gradient(180deg, rgba(255, 184, 28, 0.16), var(--panel)); box-shadow: 0 0 0 1px rgba(255, 184, 28, 0.25), inset 0 1px 0 var(--hi); }
+.kind-tab.announcer.on { border-color: var(--voice); background: linear-gradient(180deg, rgba(90, 180, 255, 0.16), var(--panel)); box-shadow: 0 0 0 1px rgba(90, 180, 255, 0.3), inset 0 1px 0 var(--hi); }
+.kind-tab:not(.on) { opacity: 0.8; }
+
+.kind-panel { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; padding: 14px; border-radius: 20px; background: var(--panel); border: 1px solid var(--line-2); border-left-width: 5px; box-shadow: inset 0 1px 0 var(--hi); }
+.kind-panel.music { border-left-color: var(--amber); }
+.kind-panel.announcer { border-left-color: var(--voice); }
+.kind-head { display: flex; gap: 12px; align-items: center; }
+.kind-head h2 { font-family: var(--display); font-size: 24px; letter-spacing: 0.05em; text-transform: uppercase; }
+.kind-head p { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+.btn.add-music { background: linear-gradient(180deg, var(--amber-2), var(--amber)); border-color: #ffe08f; color: var(--on-amber); }
+.btn.add-announcer { background: linear-gradient(180deg, #6bbcff, #2f7fd0); border-color: #a5d6ff; color: #04223f; }
+
+.lib-item.music { border-left: 4px solid rgba(255, 184, 28, 0.7); }
+.lib-item.announcer { border-left: 4px solid rgba(90, 180, 255, 0.8); }
+.lib-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 18px 10px; color: var(--muted); }
+.lib-empty p { margin: 0; max-width: 320px; }
+.picker-title { display: flex; align-items: center; gap: 10px; }

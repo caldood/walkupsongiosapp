@@ -5,6 +5,7 @@ import type { Song } from '../core/types';
 import { store } from '../state/app';
 import { useAppState } from '../state/hooks';
 import { Icon } from './icons';
+import { KindIcon } from './KindIcon';
 
 /** Bottom-sheet song chooser: pick from the library, or add new audio files on the spot. */
 export function SongPicker({
@@ -52,7 +53,7 @@ export function SongPicker({
     <div className="modal-backdrop sheet-backdrop" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
-          <h2>{title}</h2>
+          <h2 className="picker-title"><KindIcon kind={role === 'announcer' ? 'announcer' : 'music'} size={30} /> {title}</h2>
           <button className="btn-text" onClick={onClose}>
             Close
           </button>
@@ -60,7 +61,7 @@ export function SongPicker({
         <input className="field" type="search" placeholder="Search songs" value={query} onChange={(e) => setQuery(e.target.value)} />
         <input ref={input} type="file" accept={ACCEPTED_AUDIO} multiple hidden onChange={(e) => void addFiles(e.target.files)} />
         <button className="btn btn-primary wide" disabled={busy} onClick={() => input.current?.click()}>
-          {busy ? 'Adding…' : role === 'announcer' ? '＋ Add announcer recording' : '＋ Add audio file'}
+          {busy ? 'Adding…' : role === 'announcer' ? 'Add announcer voice' : 'Add song'}
         </button>
         {error && <p className="error-text">{error}</p>}
         <ul className="list">
@@ -69,6 +70,7 @@ export function SongPicker({
             return (
               <li key={s.id}>
                 <button className={`row pick ${selectedIds.includes(s.id) ? 'selected' : ''}`} onClick={() => onPick(s)}>
+                  <KindIcon kind={s.sourceType === 'spotify' ? 'spotify' : s.role === 'announcer' ? 'announcer' : 'music'} size={38} />
                   <span className="grow">
                     <span className="row-title">{s.name}</span>
                     <span className="row-sub">
