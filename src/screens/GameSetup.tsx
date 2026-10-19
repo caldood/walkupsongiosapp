@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { benchPlayers, lineup } from '../core/battingOrder';
 import { isPlayable } from '../core/songs';
 import { playback, store } from '../state/app';
-import { preloadBatters, walkUpRequest } from '../state/gameActions';
+import { preloadBatters, wakeSpeaker, walkUpRequest } from '../state/gameActions';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { Screen, Section } from '../components/ui';
@@ -153,7 +153,7 @@ export function GameSetup() {
             )}
           </div>
           <p className="hint">Connect your Bluetooth speaker now, then check the sound with Settings › Test speaker.</p>
-          <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); nav.go({ name: 'game' }); }}>
+          <button className="btn-giant btn-play" onClick={() => { restartSetupWizard(); store.resetGame(); preloadBatters(); wakeSpeaker(); nav.go({ name: 'game' }); }}>
             ENTER GAME MODE
           </button>
         </Section>

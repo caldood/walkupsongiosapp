@@ -31,6 +31,7 @@ export function Settings() {
           <Segmented label="Theme" value={settings.theme} options={[{ value: 'dark', label: 'Dark' }, { value: 'light', label: 'Light (sunny)' }]} onChange={(theme) => store.updateSettings({ theme })} />
         </div>
         <Toggle label="Keep screen awake" hint={wakeLockSupported() ? 'In Game Mode, so the phone doesn’t lock between batters.' : 'Not supported by this browser – set Auto-Lock to Never in iOS Settings.'} checked={settings.keepAwake} onChange={(keepAwake) => store.updateSettings({ keepAwake })} />
+        <Toggle label="Keep speaker awake" hint="In Game Mode, plays an inaudible tone so a Bluetooth speaker doesn’t go to sleep and clip the start of a song." checked={settings.keepSpeakerAwake} onChange={(keepSpeakerAwake) => store.updateSettings({ keepSpeakerAwake })} />
         <button
           className="btn wide"
           disabled={tone}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { speakerKeepAlive } from '../audio/keepAlive';
 import { setKeepAwake } from '../audio/platform';
 import { formatTime } from '../core/format';
 import { playback, store } from '../state/app';
@@ -59,6 +60,12 @@ export function GameShell() {
     setKeepAwake(settings.keepAwake);
     return () => setKeepAwake(false);
   }, [settings.keepAwake]);
+
+  useEffect(() => {
+    if (!settings.keepSpeakerAwake) return;
+    speakerKeepAlive.start();
+    return () => speakerKeepAlive.stop();
+  }, [settings.keepSpeakerAwake]);
 
   const playing = audio.status === 'playing';
 

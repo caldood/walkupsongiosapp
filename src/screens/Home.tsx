@@ -1,7 +1,7 @@
 import { lineup } from '../core/battingOrder';
 import { isPlayable } from '../core/songs';
 import { store } from '../state/app';
-import { resetGame } from '../state/gameActions';
+import { resetGame, wakeSpeaker } from '../state/gameActions';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { AudioOutput } from '../components/AudioOutput';
@@ -28,6 +28,7 @@ export function Home() {
   // START GAME always begins at the top of the lineup and never plays anything by itself.
   function enter() {
     resetGame();
+    wakeSpeaker();
     nav.go({ name: 'game' });
   }
 

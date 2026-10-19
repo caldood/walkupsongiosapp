@@ -62,6 +62,10 @@ static host (Netlify, Cloudflare Pages, S3, a plain folder) with no configuratio
 1. Connect the phone to the Bluetooth speaker in iOS Settings (the app plays through whatever output iOS is using;
    use Settings → **Test speaker** to check).
 2. In iOS Settings set Auto-Lock to Never *or* leave "Keep screen awake" on in the app (needs iOS 16.4+).
+   Also leave **Keep speaker awake** on (Settings → Device, default on): portable Bluetooth speakers often go to sleep
+   after a while of silence and then swallow the first second of the next song. While Game Mode is open the app plays a
+   constant inaudible 20 Hz tone (about -48 dBFS, on its own audio context, so the mix and ducking are unaffected) to keep
+   the link open. It starts when you tap START GAME and stops when you leave Game Mode. The cost is a little extra battery.
 3. Open the app → **START GAME**. It always begins at the top of the lineup (inning back to ▲ 1) and never plays music on its own. The batting order is on screen: **tap a name to play that player's song** (tap the playing name again to stop it).
 4. Walk-up: **▶ PLAY WALK-UP** → clip stops by itself at the end time → **NEXT BATTER →**.
    Use **🔒** to lock navigation (Next/Previous, mode tabs, inning, up-next) so pockets and kids can't mess it up;
@@ -193,7 +197,7 @@ touching the UI; React only renders – all rules live in `core/` and are unit-t
 
 ## Testing
 
-`npm test` runs 126 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
+`npm test` runs 131 unit tests covering batting order, player/song assignment, clip timing, next batter & wrap,
 tap-to-play and replacing songs, import/export round trips and re-linking,
 missing songs, game reset, and the audio state machine (loading/playing/paused/stop, clip end, interruptions,
 autoplay-blocked recovery, stale-play protection).

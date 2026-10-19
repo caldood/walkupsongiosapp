@@ -88,6 +88,8 @@ export type Theme = 'dark' | 'light';
 export interface AppSettings {
   theme: Theme;
   keepAwake: boolean;
+  /** Play a sub-audible tone in Game Mode so a Bluetooth speaker doesn't go to sleep between walk-ups. */
+  keepSpeakerAwake: boolean;
   activeTeamId: ID | null;
 }
 
@@ -106,7 +108,7 @@ export const LEGACY_ANNOUNCER_DUCK = 0.35;
 export const DEFAULT_ANNOUNCER_DELAY = 3;
 export const ANNOUNCER_DELAY_CHOICES = [3, 4, 5] as const;
 
-export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: true, activeTeamId: null };
+export const DEFAULT_APP_SETTINGS: AppSettings = { theme: 'dark', keepAwake: true, keepSpeakerAwake: true, activeTeamId: null };
 
 /** Walk-up clips never run longer than this, whatever start/end or default length is set. */
 export const MAX_CLIP_SECONDS = 15;

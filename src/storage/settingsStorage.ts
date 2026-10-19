@@ -11,6 +11,7 @@ export function loadAppSettings(): AppSettings {
     return {
       theme: p.theme === 'light' ? 'light' : 'dark',
       keepAwake: typeof p.keepAwake === 'boolean' ? p.keepAwake : DEFAULT_APP_SETTINGS.keepAwake,
+      keepSpeakerAwake: typeof p.keepSpeakerAwake === 'boolean' ? p.keepSpeakerAwake : DEFAULT_APP_SETTINGS.keepSpeakerAwake,
       activeTeamId: typeof p.activeTeamId === 'string' ? p.activeTeamId : null,
     };
   } catch {

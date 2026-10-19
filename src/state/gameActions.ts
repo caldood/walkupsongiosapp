@@ -1,6 +1,7 @@
 import { currentBatter, lineup } from '../core/battingOrder';
 import { announcerDelayFor, fitAnnouncer, resolveClip } from '../core/clip';
 import type { Player, Team } from '../core/types';
+import { speakerKeepAlive } from '../audio/keepAlive';
 import { audioManager, playback, store } from './app';
 import type { WalkUpRequest } from './playback';
 
@@ -82,6 +83,14 @@ export function preloadBatters() {
   const rotated = order.slice(i).concat(order.slice(0, i));
   playback.preload(rotated.map((b) => b.walkUpSongId));
   playback.preloadAnnouncers(rotated.map((b) => b.announcerSongId));
+}
+
+/**
+ * Starts the Bluetooth keep-alive tone (if enabled). Call from the tap that opens Game Mode: browsers only let audio
+ * begin inside a gesture. Game Mode itself stops it again when it closes.
+ */
+export function wakeSpeaker() {
+  if (store.getState().settings.keepSpeakerAwake) speakerKeepAlive.start();
 }
 
 export function nextBatter() {
