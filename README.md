@@ -62,7 +62,7 @@ static host (Netlify, Cloudflare Pages, S3, a plain folder) with no configuratio
 1. Connect the phone to the Bluetooth speaker in iOS Settings (the app plays through whatever output iOS is using;
    use Settings → **Test speaker** to check).
 2. In iOS Settings set Auto-Lock to Never *or* leave "Keep screen awake" on in the app (needs iOS 16.4+).
-3. Open the app → **START GAME**. The batting order is on screen: **tap a name to play that player's song** (tap the playing name again to stop it).
+3. Open the app → **START GAME**. It always begins at the top of the lineup (inning back to ▲ 1) and never plays music on its own. The batting order is on screen: **tap a name to play that player's song** (tap the playing name again to stop it).
 4. Walk-up: **▶ PLAY WALK-UP** → clip stops by itself at the end time → **NEXT BATTER →**.
    Use **🔒** to lock navigation (Next/Previous, mode tabs, inning, up-next) so pockets and kids can't mess it up;
    Play/Pause/Stop stay live. Unlock by holding the button.

@@ -1,7 +1,7 @@
 import { lineup } from '../core/battingOrder';
 import { isPlayable } from '../core/songs';
 import { store } from '../state/app';
-import { preloadBatters } from '../state/gameActions';
+import { resetGame } from '../state/gameActions';
 import { useActiveTeam, useAppState } from '../state/hooks';
 import { useNav } from '../Nav';
 import { AudioOutput } from '../components/AudioOutput';
@@ -25,8 +25,9 @@ export function Home() {
   ];
   const doneCount = steps.filter((s) => s.done).length;
 
+  // START GAME always begins at the top of the lineup and never plays anything by itself.
   function enter() {
-    preloadBatters();
+    resetGame();
     nav.go({ name: 'game' });
   }
 
